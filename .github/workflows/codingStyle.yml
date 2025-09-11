@@ -3,7 +3,7 @@
 name: Check the coding style
 
 on:
-  push:
+  workflow_dispatch:
 
 jobs:
   flake8-lint:
@@ -18,7 +18,7 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: flake8 Lint
+      - name: Execute flake8 Lint
         uses: py-actions/flake8@v2
         with:
           path: "consang"

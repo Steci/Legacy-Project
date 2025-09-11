@@ -3,7 +3,7 @@
 name: Security Audit
 
 on:
-  push:
+  workflow_dispatch:
 
 jobs:
   security:
