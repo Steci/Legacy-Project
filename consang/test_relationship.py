@@ -1,5 +1,5 @@
 #import pytest
-from consang.relationship import consang_of
+from relationship import consang_of
 
 def test_consang_of_with_consang_key():
     person = {"consang": 25}

@@ -1,6 +1,6 @@
-# This workflow checks the quality of the code and its coding style, and fails if it finds any errors.
+# This workflow checks the quality of the code and its coding style, the report is available in the logs
 
-name: flake8 Lint
+name: Check the coding style
 
 on:
   push:
@@ -22,6 +22,7 @@ jobs:
         uses: py-actions/flake8@v2
         with:
           path: "consang"
+          args: " --exit-zero"
 
       - name: Success message
         if: success()

@@ -1,6 +1,6 @@
 # A report is available in GitHub Actions with the coverage rate
 
-name: Test and Coverage
+name: Check the coverage rate
 
 on:
   push:
