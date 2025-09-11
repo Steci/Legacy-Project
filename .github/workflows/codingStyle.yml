@@ -1,0 +1,29 @@
+# This workflow checks the quality of the code and its coding style, the report is available in the logs
+
+name: Check the coding style
+
+on:
+  workflow_dispatch:
+
+jobs:
+  flake8-lint:
+    runs-on: ubuntu-latest
+    name: Lint
+    steps:
+      - name: Check out source repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python environment
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Execute flake8 Lint
+        uses: py-actions/flake8@v2
+        with:
+          path: "consang"
+          args: " --exit-zero"
+
+      - name: Success message
+        if: success()
+        run: echo "The workflow has been executed correctly !"

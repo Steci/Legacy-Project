@@ -1,0 +1,29 @@
+# Check if there are any known vulnerabilities in the libraries
+
+name: Security Audit
+
+on:
+  workflow_dispatch:
+
+jobs:
+  security:
+    name: Security audit with pip-audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Install pip-audit
+        run: pip install pip-audit
+
+      - name: Run pip-audit
+        run: pip-audit || true
+
+      - name: Success message
+        if: success()
+        run: echo "The workflow has been executed correctly !"
