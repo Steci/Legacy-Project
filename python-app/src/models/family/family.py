@@ -1,11 +1,11 @@
-# Family.py
+# family/family.py
 
 from typing import List, Optional
 from dataclasses import dataclass, field
 from datetime import date
 from enum import Enum
 
-from Event import Event
+from event import Event
 
 class RelationKind(Enum):
     MARRIED = "married"
