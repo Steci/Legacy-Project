@@ -1,27 +1,10 @@
-# Person.py
+# person/person.py
 
 from typing import List, Optional, Union
-from enum import Enum
 from dataclasses import dataclass, field
 
-from Event import Event
-
-class Sex(Enum):
-    MALE = "male"
-    FEMALE = "female"
-    NEUTER = "neuter"
-
-@dataclass
-class Title:
-    name: str
-    # Add more fields as needed
-
-@dataclass
-class Relation:
-    # Define fields for non-native parent relations, etc.
-    relation_type: str
-    related_person: int # Unique identifier of related person
-    # Add more fields as needed
+from event import Event
+from params import Sex, Title, Relation
 
 @dataclass
 class Person:
