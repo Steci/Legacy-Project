@@ -33,7 +33,7 @@ Finally, the team must implement a complete QA, testing, and secure deployment p
   
 ### <a id="conventionnal_commit"></a> Rules for conventional commit messages ➕  
   
-[The document rules for conventional commit messages](docs/COMMITS.md)  
+[The document rules for conventional commit messages](docs/conventionnalCommit.md)  
 
 If you would like to contribute to the project, see [CONTRIBUTING.md](https://github.com/geneweb/geneweb/blob/master/CONTRIBUTING.md)  
   
