@@ -4,6 +4,7 @@ from typing import List, Optional, Union
 from dataclasses import dataclass, field
 from datetime import date
 from enum import Enum
+import json
 
 from event import Event, Witness
 from date import Date
@@ -482,3 +483,141 @@ class Family:
         if self.key_index is not None:
             return hash(self.key_index)
         return hash((self.parent1, self.parent2, tuple(sorted(self.children))))
+
+    # JSON Export Methods (Enhanced beyond original Geneweb)
+    def to_json(self, indent: Optional[int] = None, ensure_ascii: bool = False) -> str:
+        """Export family to JSON string
+        
+        Args:
+            indent: JSON indentation for pretty printing (None for compact)
+            ensure_ascii: If True, non-ASCII characters are escaped
+            
+        Returns:
+            JSON string representation of the family
+        """
+        return json.dumps(self.to_dict(), indent=indent, ensure_ascii=ensure_ascii, default=str)
+    
+    def to_json_file(self, filepath: str, indent: int = 2, ensure_ascii: bool = False) -> None:
+        """Export family to JSON file
+        
+        Args:
+            filepath: Path to output JSON file
+            indent: JSON indentation for pretty printing
+            ensure_ascii: If True, non-ASCII characters are escaped
+        """
+        with open(filepath, 'w', encoding='utf-8') as f:
+            json.dump(self.to_dict(), f, indent=indent, ensure_ascii=ensure_ascii, default=str)
+    
+    @classmethod
+    def from_json(cls, json_str: str) -> 'Family':
+        """Create Family from JSON string
+        
+        Args:
+            json_str: JSON string representation
+            
+        Returns:
+            Family instance
+        """
+        data = json.loads(json_str)
+        return cls.from_dict(data)
+    
+    @classmethod
+    def from_json_file(cls, filepath: str) -> 'Family':
+        """Create Family from JSON file
+        
+        Args:
+            filepath: Path to JSON file
+            
+        Returns:
+            Family instance
+        """
+        with open(filepath, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        return cls.from_dict(data)
+    
+    @classmethod
+    def from_dict(cls, data: dict) -> 'Family':
+        """Create Family from dictionary (inverse of to_dict)
+        
+        Args:
+            data: Dictionary representation of family
+            
+        Returns:
+            Family instance
+        """
+        # Helper to reconstruct Event from dict (same as in Person class)
+        def dict_to_event(event_data: Optional[dict]) -> Optional[Event]:
+            if not event_data:
+                return None
+            
+            # Reconstruct date
+            date_obj = None
+            if event_data.get('date'):
+                date_data = event_data['date']
+                if date_data.get('dmy'):
+                    from date import DMY, Precision, Calendar
+                    dmy_data = date_data['dmy']
+                    dmy = DMY(
+                        day=dmy_data.get('day', 0),
+                        month=dmy_data.get('month', 0),
+                        year=dmy_data.get('year', 0),
+                        prec=Precision(dmy_data['prec']) if dmy_data.get('prec') else None,
+                        delta=dmy_data.get('delta')
+                    )
+                    date_obj = Date(
+                        dmy=dmy,
+                        calendar=Calendar(date_data['calendar']) if date_data.get('calendar') else None,
+                        text=date_data.get('text')
+                    )
+            
+            # Reconstruct place
+            place_obj = None
+            if event_data.get('place'):
+                from event import Place
+                place_data = event_data['place']
+                place_obj = Place(
+                    country=place_data.get('country', ''),
+                    region=place_data.get('region', ''),
+                    district=place_data.get('district', ''),
+                    county=place_data.get('county', ''),
+                    township=place_data.get('township', ''),
+                    canton=place_data.get('canton', ''),
+                    town=place_data.get('town', ''),
+                    other=place_data.get('other', '')
+                )
+            
+            # Reconstruct witnesses
+            witnesses = []
+            if event_data.get('witnesses'):
+                from event import Witness, WitnessType
+                for w_data in event_data['witnesses']:
+                    witness = Witness(
+                        key_index=w_data.get('key_index', 0),
+                        type=WitnessType(w_data['type']) if w_data.get('type') else WitnessType.OTHER
+                    )
+                    witnesses.append(witness)
+            
+            return Event(
+                name=event_data['name'],
+                date=date_obj,
+                place=place_obj,
+                reason=event_data.get('reason'),
+                note=event_data.get('note'),
+                source=event_data.get('source'),
+                witnesses=witnesses
+            )
+        
+        # Reconstruct the Family
+        return cls(
+            parent1=data.get('parent1', 0),
+            parent2=data.get('parent2', 0),
+            children=data.get('children', []),
+            relation=RelationKind(data['relation']) if data.get('relation') else RelationKind.UNKNOWN,
+            marriage=dict_to_event(data.get('marriage')),
+            divorce=dict_to_event(data.get('divorce')),
+            events=[dict_to_event(e) for e in data.get('events', []) if e],
+            notes=data.get('notes'),
+            origin_file=data.get('origin_file'),
+            sources=data.get('sources'),
+            key_index=data.get('key_index')
+        )
