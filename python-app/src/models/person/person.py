@@ -3,6 +3,7 @@
 from typing import List, Optional, Union
 from dataclasses import dataclass, field
 from datetime import datetime
+import json
 
 from event import Event
 from date import Date
@@ -649,3 +650,168 @@ class Person:
         if self.key_index is not None:
             return hash(self.key_index)
         return hash((self.first_name, self.surname, self.occ))
+
+    # JSON Export Methods (Enhanced beyond original Geneweb)
+    def to_json(self, indent: Optional[int] = None, ensure_ascii: bool = False) -> str:
+        """Export person to JSON string
+        
+        Args:
+            indent: JSON indentation for pretty printing (None for compact)
+            ensure_ascii: If True, non-ASCII characters are escaped
+            
+        Returns:
+            JSON string representation of the person
+        """
+        return json.dumps(self.to_dict(), indent=indent, ensure_ascii=ensure_ascii, default=str)
+    
+    def to_json_file(self, filepath: str, indent: int = 2, ensure_ascii: bool = False) -> None:
+        """Export person to JSON file
+        
+        Args:
+            filepath: Path to output JSON file
+            indent: JSON indentation for pretty printing
+            ensure_ascii: If True, non-ASCII characters are escaped
+        """
+        with open(filepath, 'w', encoding='utf-8') as f:
+            json.dump(self.to_dict(), f, indent=indent, ensure_ascii=ensure_ascii, default=str)
+    
+    @classmethod
+    def from_json(cls, json_str: str) -> 'Person':
+        """Create Person from JSON string
+        
+        Args:
+            json_str: JSON string representation
+            
+        Returns:
+            Person instance
+        """
+        data = json.loads(json_str)
+        return cls.from_dict(data)
+    
+    @classmethod
+    def from_json_file(cls, filepath: str) -> 'Person':
+        """Create Person from JSON file
+        
+        Args:
+            filepath: Path to JSON file
+            
+        Returns:
+            Person instance
+        """
+        with open(filepath, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        return cls.from_dict(data)
+    
+    @classmethod
+    def from_dict(cls, data: dict) -> 'Person':
+        """Create Person from dictionary (inverse of to_dict)
+        
+        Args:
+            data: Dictionary representation of person
+            
+        Returns:
+            Person instance
+        """
+        # Helper to reconstruct Event from dict
+        def dict_to_event(event_data: Optional[dict]) -> Optional[Event]:
+            if not event_data:
+                return None
+            
+            # Reconstruct date
+            date_obj = None
+            if event_data.get('date'):
+                date_data = event_data['date']
+                if date_data.get('dmy'):
+                    from date import DMY, Precision, Calendar
+                    dmy_data = date_data['dmy']
+                    dmy = DMY(
+                        day=dmy_data.get('day', 0),
+                        month=dmy_data.get('month', 0),
+                        year=dmy_data.get('year', 0),
+                        prec=Precision(dmy_data['prec']) if dmy_data.get('prec') else None,
+                        delta=dmy_data.get('delta')
+                    )
+                    date_obj = Date(
+                        dmy=dmy,
+                        calendar=Calendar(date_data['calendar']) if date_data.get('calendar') else None,
+                        text=date_data.get('text')
+                    )
+            
+            # Reconstruct place
+            place_obj = None
+            if event_data.get('place'):
+                from event import Place
+                place_data = event_data['place']
+                place_obj = Place(
+                    country=place_data.get('country', ''),
+                    region=place_data.get('region', ''),
+                    district=place_data.get('district', ''),
+                    county=place_data.get('county', ''),
+                    township=place_data.get('township', ''),
+                    canton=place_data.get('canton', ''),
+                    town=place_data.get('town', ''),
+                    other=place_data.get('other', '')
+                )
+            
+            # Reconstruct witnesses
+            witnesses = []
+            if event_data.get('witnesses'):
+                from event import Witness, WitnessType
+                for w_data in event_data['witnesses']:
+                    witness = Witness(
+                        key_index=w_data.get('key_index', 0),
+                        type=WitnessType(w_data['type']) if w_data.get('type') else WitnessType.OTHER
+                    )
+                    witnesses.append(witness)
+            
+            return Event(
+                name=event_data['name'],
+                date=date_obj,
+                place=place_obj,
+                reason=event_data.get('reason'),
+                note=event_data.get('note'),
+                source=event_data.get('source'),
+                witnesses=witnesses
+            )
+        
+        # Helper to reconstruct Relation from dict
+        def dict_to_relation(rel_data: dict) -> Relation:
+            from params import RelationType
+            return Relation(
+                r_type=RelationType(rel_data['type']) if rel_data.get('type') else RelationType.ADOPTION,
+                r_fath=rel_data.get('father'),
+                r_moth=rel_data.get('mother'),
+                r_sources=rel_data.get('sources', '')
+            )
+        
+        # Helper to reconstruct Title from dict
+        def dict_to_title(title_data: dict) -> Title:
+            return Title(name=title_data['name'])
+        
+        # Reconstruct the Person
+        return cls(
+            first_name=data['first_name'],
+            surname=data['surname'],
+            public_name=data.get('public_name'),
+            aliases=data.get('aliases', []),
+            first_names_aliases=data.get('first_names_aliases', []),
+            surnames_aliases=data.get('surnames_aliases', []),
+            sex=Sex(data['sex']) if data.get('sex') else Sex.NEUTER,
+            titles=[dict_to_title(t) for t in data.get('titles', [])],
+            qualifiers=data.get('qualifiers', []),
+            occupation=data.get('occupation'),
+            occ=data.get('occ', 0),
+            image=data.get('image'),
+            parents=[dict_to_relation(r) for r in data.get('parents', [])],
+            related=data.get('related', []),
+            families=data.get('families', []),
+            birth=dict_to_event(data.get('birth')),
+            baptism=dict_to_event(data.get('baptism')),
+            death=dict_to_event(data.get('death')),
+            burial=dict_to_event(data.get('burial')),
+            events=[dict_to_event(e) for e in data.get('events', []) if e],
+            notes=data.get('notes'),
+            psources=data.get('psources'),
+            access=data.get('access'),
+            key_index=data.get('key_index')
+        )
