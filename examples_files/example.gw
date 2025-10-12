@@ -1,0 +1,18 @@
+fam CORNO Joseph_Marie_Vincent + THOMAS Marie_Julienne
+src Family source example
+comm Family comment example
+beg
+- h Corno Yann 1935 #bp Soisy 1997
+- f Thomas Marie_Julienne 0
+end
+
+notes Corno Yann
+beg
+This is a note for Yann Corno.
+It can contain spaces and blank lines.
+end
+
+rel Corno Yann
+beg
+- godp: Martin Paul + Smith Jane
+end
