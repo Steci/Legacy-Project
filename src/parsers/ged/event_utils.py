@@ -2,7 +2,8 @@
 Event parsing utilities for GEDCOM parser.
 Extracted to reduce cyclomatic complexity while preserving OCaml compatibility.
 """
-from typing import List, Dict, Optional, Any
+from collections import defaultdict
+from typing import List, Dict, Optional, Any, DefaultDict
 from ..common.base_models import BaseEvent
 from .models import GedcomRecord
 
@@ -12,9 +13,16 @@ class EventParsingUtils:
     
     # Standard personal event types from OCaml treat_indi_pevent
     PERSONAL_EVENT_TYPES = [
-        "BAPM", "CHR", "CHRA", "BARM", "BASM", "BLES", "CONF", 
-        "FCOM", "ORDN", "NATU", "EMIG", "IMMI", "CENS", "PROB", 
-        "WILL", "GRAD", "RETI", "EVEN"
+        "BAPM", "CHR", "BAPL", "CHRA", "BARM", "BASM", "BIRT",
+        "BLES", "BURI", "CENS", "CONF", "CONL", "CREM", "DEAT",
+        "DECO", "EDUC", "EMIG", "ENDL", "FCOM", "GRAD", "IMMI",
+        "NATU", "OCCU", "ORDN", "PROP", "RETI", "RESI", "SLGS",
+        "SLGC", "WILL", "EVEN"
+    ]
+
+    FAMILY_EVENT_TYPES = [
+        "ANUL", "DIV", "ENGA", "MARR", "MARB", "MARC", "MARL",
+        "RESI", "SEP", "SEPA", "EVEN"
     ]
     
     # Witness relationship types
@@ -108,7 +116,13 @@ class EventParsingUtils:
             
         # Extract notes and sources
         event.note = notes_extractor(event_record)
-        event.source = source_extractor(event_record)
+
+        source_result = source_extractor(event_record)
+        if hasattr(source_result, "combined_text"):
+            event.source = source_result.combined_text()
+            event.source_notes = source_result.combined_notes()
+        else:
+            event.source = source_result
         
         return event
     
@@ -173,9 +187,10 @@ class SpecialRelationshipProcessor:
     """Handles processing of special relationships (adoption, godparent, witnesses)."""
     
     def __init__(self):
-        self.adoption_map = {}  # family_xref -> {person_xref -> adoption_type}
-        self.godparent_relationships = {}  # person_xref -> [godparent_xrefs]
-        self.witness_relationships = {}  # person_xref -> [witness_info]
+        self.adoption_map: DefaultDict[str, Dict[str, str]] = defaultdict(dict)
+        self.godparent_relationships: DefaultDict[str, List[str]] = defaultdict(list)
+        self.witness_relationships: DefaultDict[str, List[Dict[str, str]]] = defaultdict(list)
+        self.family_witness_relationships: DefaultDict[str, List[Dict[str, str]]] = defaultdict(list)
     
     def process_adoption_event(self, adop_record: GedcomRecord, person_xref: str):
         """Process ADOP event following OCaml logic."""
@@ -185,17 +200,15 @@ class SpecialRelationshipProcessor:
             family_xref = famc_record.value
             
             # Check adoption type
-            adop_type = "both"  # Default
+            adop_type = "BOTH"  # Default
             for sub_rec in adop_record.sub_records:
                 if sub_rec.tag == "ADOP":
                     if sub_rec.value == "HUSB":
-                        adop_type = "husband"
+                        adop_type = "HUSB"
                     elif sub_rec.value == "WIFE":
-                        adop_type = "wife"
+                        adop_type = "WIFE"
                         
             # Store adoption information
-            if family_xref not in self.adoption_map:
-                self.adoption_map[family_xref] = {}
             self.adoption_map[family_xref][person_xref] = adop_type
     
     def process_famc_adoption(self, famc_record: GedcomRecord, person_xref: str):
@@ -205,9 +218,7 @@ class SpecialRelationshipProcessor:
         # Check for PEDI (pedigree) information
         pedi_record = EventParsingUtils._find_sub_record(famc_record, "PEDI")
         if pedi_record and pedi_record.value in ["adopted", "foster"]:
-            if family_xref not in self.adoption_map:
-                self.adoption_map[family_xref] = {}
-            self.adoption_map[family_xref][person_xref] = "both"  # Default both parents
+            self.adoption_map[family_xref][person_xref] = "BOTH"  # Default both parents
     
     def process_event_witnesses(self, event_record: GedcomRecord, event_type: str, person_xref: str):
         """Process witnesses for an event following OCaml witness logic."""
@@ -216,17 +227,41 @@ class SpecialRelationshipProcessor:
         
         # Store godparent relationships
         if categorized['godparents']:
-            if person_xref not in self.godparent_relationships:
-                self.godparent_relationships[person_xref] = []
             self.godparent_relationships[person_xref].extend(categorized['godparents'])
         
         # Store witness relationships
         if categorized['witnesses']:
-            if person_xref not in self.witness_relationships:
-                self.witness_relationships[person_xref] = []
             for witness_info in categorized['witnesses']:
                 witness_info['event'] = event_type
                 self.witness_relationships[person_xref].append(witness_info)
+
+    def process_family_event_witnesses(self, event_record: GedcomRecord, event_type: str, family_xref: str):
+        """Record witnesses attached to family-level events."""
+
+        witnesses = EventParsingUtils.extract_witnesses(event_record)
+        if not witnesses:
+            return
+
+        for witness in witnesses:
+            entry = {
+                'witness': witness.get('witness', ''),
+                'type': witness.get('type', 'witness'),
+                'event': event_type,
+            }
+            self.family_witness_relationships[family_xref].append(entry)
+
+    def consume_family_adoptions(self, family_xref: str) -> Dict[str, str]:
+        """Return adoption details for a family without discarding stored info."""
+
+        return dict(self.adoption_map.get(family_xref, {}))
+
+    def consume_family_witnesses(self, family_xref: str) -> List[Dict[str, str]]:
+        """Return recorded family witnesses."""
+
+        witnesses = self.family_witness_relationships.pop(family_xref, [])
+        if not witnesses:
+            return []
+        return list(witnesses)
     
     def finalize_relationships(self, database):
         """Apply stored relationships to database."""
@@ -235,7 +270,9 @@ class SpecialRelationshipProcessor:
             for person_xref, adoption_type in adoptions.items():
                 if person_xref in database.individuals and adoption_type != "biological":
                     person = database.individuals[person_xref]
-                    person.adoption_families.append(family_xref)
+                    if family_xref not in person.adoption_details:
+                        person.adoption_families.append(family_xref)
+                    person.adoption_details[family_xref] = adoption_type
                     
         # Process godparent relationships
         for person_xref, godparent_list in self.godparent_relationships.items():

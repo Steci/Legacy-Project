@@ -1,6 +1,5 @@
 from dataclasses import dataclass, field
 from typing import List, Optional, Dict, Any, Union
-from datetime import datetime
 
 # Import base models instead of redefining them
 from ..common.base_models import (
@@ -19,6 +18,7 @@ class GedcomRecord:
     sub_records: List['GedcomRecord'] = field(default_factory=list)
     line_number: int = 0
     used: bool = False
+    raw_value: bytes = b""
 
 # Use BaseDate and BaseEvent from common models
 # GedcomDate is now just an alias to BaseDate for backwards compatibility
@@ -45,6 +45,7 @@ class GedcomPerson:
     
     # Special relationships (following OCaml implementation)
     adoption_families: List[str] = field(default_factory=list)  # Families where adopted
+    adoption_details: Dict[str, str] = field(default_factory=dict)  # family -> parent role
     godparents: List[str] = field(default_factory=list)  # Godparent person XREFs
     witnesses: List[Dict[str, str]] = field(default_factory=list)  # Witness relationships
     
@@ -94,6 +95,8 @@ class GedcomFamily:
     events: List[BaseEvent] = field(default_factory=list)
     note: str = ""
     source: str = ""
+    witnesses: List[Dict[str, str]] = field(default_factory=list)
+    adoption_notes: Dict[str, str] = field(default_factory=dict)
     
     # Implement BaseFamilyProtocol
     def get_id(self) -> str:

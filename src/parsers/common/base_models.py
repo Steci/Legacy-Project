@@ -79,6 +79,7 @@ class BaseEvent:
     place: str = ""
     note: str = ""
     source: str = ""
+    source_notes: str = ""
     confidence: Optional[str] = None
 
 @dataclass
