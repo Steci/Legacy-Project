@@ -2,6 +2,12 @@ from dataclasses import dataclass, field
 from typing import List, Dict, Optional, Any, Tuple
 
 @dataclass
+class EventLine:
+    raw: str
+    tag: str
+    tokens: List[str] = field(default_factory=list)
+
+@dataclass
 class Person:
     raw_name: str
     last: str
@@ -9,6 +15,7 @@ class Person:
     number: Optional[int] = None
     tokens: List[str] = field(default_factory=list)
     extra: Dict[str, Any] = field(default_factory=dict)
+    events: List[EventLine] = field(default_factory=list)
 
     def key(self) -> str:
         if self.number is not None:
@@ -29,6 +36,7 @@ class Family:
     comm: Optional[str] = None
     witnesses: List[str] = field(default_factory=list)
     children: List[Tuple[Optional[str], Person, List[str]]] = field(default_factory=list)
+    events: List[EventLine] = field(default_factory=list)
     raw: List[str] = field(default_factory=list)
 
     def __repr__(self):

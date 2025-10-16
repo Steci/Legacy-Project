@@ -1,0 +1,467 @@
+0 HEAD
+1 SOUR GeneWeb
+2 VERS 7.1-beta
+2 NAME gwb2ged
+2 CORP INRIA
+3 ADDR http://www.geneweb.org
+2 DATA galichet.gwb
+1 DATE 20 SEP 2025
+2 TIME 17:48:07
+1 FILE galichet.ged
+1 GEDC
+2 VERS 5.5.1
+2 FORM LINEAGE-LINKED
+1 CHAR UTF-8
+1 NOTE TITLE=Ceci est une base de test.
+2 CONT 
+2 CONT * initialement créée pour investiguer le pb #1334
+2 CONT (https://github.com/geneweb/geneweb/issues/1334)
+2 CONT et valider la correction avec le script gwu_test.sh
+2 CONT 
+2 CONT * test la présence d'une apostrophe dans le texte alternate d'une image
+2 CONC ,
+2 CONT (https://github.com/geneweb/geneweb/issues/1558)
+2 CONT 
+2 CONT voir les notes du couple [[Jean Pierre/Galichet]] et [[Marie Elisabeth/
+2 CONC Loche]]
+2 CONT 
+0 @I1@ INDI
+1 NAME Jean Pierre /Galichet/
+1 SEX M
+1 DEAT
+2 DATE BEF 1849
+1 OCCU Marchand de bois
+1 FAMS @F1@
+1 SOUR déjà décédés au mariage de sa fille Thérèse Eugénie
+1 NOTE * j'utilise la même image dans les notes du mari et de la femme
+2 CONT * avec un texte alternatif sans apostrophe pour le mari
+2 CONT 
+2 CONT <img src="%sm=IM;s=jean_pierre.0.galichet.jpg" width=50% alt="texte alt
+2 CONC ernatif sans apostrophe">
+2 CONT 
+2 CONT * et un texte alternatif '''avec''' apostrophe pour la femme [[Marie El
+2 CONC isabeth/Loche]]
+2 CONT 
+2 CONT * les vues individuelles sont correctes, mais la vue sous forme de tabl
+2 CONC e des ascendants est incorrecte à cause de cette apostrophe.
+0 @I2@ INDI
+1 NAME Marie Elisabeth /Loche/
+1 SEX F
+1 DEAT
+2 DATE BEF 1849
+1 FAMS @F1@
+1 SOUR déjà décédés au mariage de sa fille Thérèse Eugénie
+1 NOTE * j'utilise la même image dans les notes du mari et de la femme
+2 CONT * avec un texte alternatif sans apostrophe pour le mari [[Jean Pierre/G
+2 CONC alichet]]
+2 CONT 
+2 CONT * et un texte alternatif '''avec''' apostrophe pour la femme
+2 CONT 
+2 CONT <img src="%sm=IM;s=jean_pierre.0.galichet.jpg" width=50% alt="retour d'
+2 CONC etat">
+2 CONT 
+2 CONT * les vues individuelles sont correctes,
+2 CONT mais la vue sous forme de table des ascendants est incorrecte à cause d
+2 CONC e cette apostrophe.
+0 @I3@ INDI
+1 NAME Jean Charles /Galichet/
+1 SEX M
+1 BIRT
+2 DATE 1813
+2 SOUR 1849-36ans
+1 DEAT Y
+1 OCCU Négociant
+1 FAMC @F1@
+1 SOUR témoin au mariage de sa soeur Thérèse Eugénie
+1 NOTE What about [[[Chantal]]]  notes,
+2 CONT and [[[Andre]]] as second creation ?
+2 CONT and [[[Gallery]]] for full test
+0 @I4@ INDI
+1 NAME Pierre /Galichet/
+1 SEX M
+1 BIRT
+2 DATE 1814
+1 DEAT
+2 DATE 01 JAN 1835
+1 FAMC @F1@
+1 SOUR rajout de 2 enfants pour test
+0 @I5@ INDI
+1 NAME Paul /Galichet/
+1 SEX M
+1 BIRT
+2 DATE 1816
+1 DEAT
+2 DATE 01 JAN 1886
+1 FAMC @F1@
+1 FAMS @F2@
+1 SOUR rajout de 2 enfants pour test
+0 @I6@ INDI
+1 NAME lolo /Galichet/
+1 SEX M
+1 BIRT
+2 DATE 1818
+1 DEAT Y
+1 FAMC @F1@
+1 FAMS @F3@
+1 FAMS @F4@
+1 SOUR inventé
+1 NOTE * je le crée de façon arbitraire, avec deux mariages, le 1er avec divor
+2 CONC ce.
+0 @I7@ INDI
+1 NAME Thérèse Eugénie /Galichet/
+1 SEX F
+1 BIRT
+2 DATE 07 SEP 1830
+2 PLAC [Châlons-sur-Marne] - Châlons-en-Champagne,51,Marne,Champagne-Ardenne,France
+2 SOUR acte de mariage
+1 DEAT Y
+1 FAMC @F1@
+1 SOUR inscription des hypothèques du 23 février 1874 au profit de dame thérèse eugènie Galichet; voir ses ascendants dans la base <a href="https://gw.geneanet.org/mout?lang=fr&p=therese+eugenie&n=galichet">mout</a>
+1 NOTE almost empty
+0 @I8@ INDI
+1 NAME Florence /Marty/
+1 SEX F
+1 BIRT
+2 DATE 01 JAN 1815
+1 DEAT
+2 DATE 1875
+1 FAMS @F2@
+1 SOUR archives
+0 @I9@ INDI
+1 NAME Jean-Paul /Galichet/
+1 SEX M
+1 BIRT
+2 DATE 02 FEB 1836
+1 FAMC @F2@
+1 SOUR archives
+0 @I10@ INDI
+1 NAME Laure /Galichet/
+1 SEX F
+1 BIRT
+2 DATE 1839
+1 FAMC @F2@
+1 SOUR archives
+0 @I11@ INDI
+1 NAME prenom1 /femme1/
+1 SEX F
+1 BIRT
+2 DATE 1818
+1 FAMS @F3@
+1 SOUR inventé
+0 @I12@ INDI
+1 NAME prenom2 /femme2/
+1 SEX F
+1 BIRT
+2 DATE 1825
+1 FAMS @F4@
+1 SOUR inventé
+0 @I13@ INDI
+1 NAME Louis /Sutaine/
+1 SEX M
+1 FAMS @F5@
+0 @I14@ INDI
+1 NAME Nicole /Galichet/
+1 SEX F
+1 FAMS @F5@
+1 NOTE * Elle n'est pas liée aux autres Galichet
+0 @I15@ INDI
+1 NAME Louis /Sutaine/
+1 SEX M
+1 BIRT
+2 DATE 1575
+1 DEAT Y
+1 FAMC @F5@
+1 FAMS @F6@
+0 @I16@ INDI
+1 NAME Claude /Petizon/
+1 SEX F
+1 FAMS @F6@
+0 @I17@ INDI
+1 NAME Perrette /Sutaine/
+1 SEX F
+1 BIRT
+2 DATE 1600
+1 DEAT
+2 DATE 11 APR 1684
+2 PLAC [Saint-Jacques] - Reims,51,Marne,Champagne-Ardenne,France
+1 FAMC @F6@
+1 FAMS @F7@
+0 @I18@ INDI
+1 NAME Jean /Jayot/
+1 SEX M
+1 BIRT
+2 DATE 1604
+1 DEAT
+2 DATE 08 NOV 1674
+2 PLAC [Saint-Jacques] - Reims,51,Marne,Champagne-Ardenne,France
+1 FAMS @F7@
+0 @I19@ INDI
+1 NAME Claude /Jayot/
+1 SEX F
+1 BIRT
+2 DATE 27 JUN 1633
+1 DEAT
+2 DATE 11 APR 1697
+2 PLAC [Saint-Hilaire] - Reims,51,Marne,Champagne-Ardenne,France
+1 FAMC @F7@
+1 FAMS @F8@
+0 @I20@ INDI
+1 NAME Jean /Boizot/
+1 SEX M
+1 BIRT
+2 DATE 1618
+1 DEAT
+2 DATE 22 MAR 1702
+2 PLAC [Saint-Jacques] - Reims,51,Marne,Champagne-Ardenne,France
+1 OCCU Menuisier
+1 FAMS @F8@
+0 @I21@ INDI
+1 NAME Jeanne /Boizot/
+1 SEX F
+1 BIRT
+2 DATE 27 FEB 1671
+2 PLAC [Saint-Jacques] - Reims,51,Marne,Champagne-Ardenne,France
+1 DEAT
+2 DATE 22 APR 1748
+2 PLAC [Saint-Hilaire] - Reims,51,Marne,Champagne-Ardenne,France
+1 FAMC @F8@
+1 FAMS @F9@
+0 @I22@ INDI
+1 NAME Anthoine /Geruzet/
+1 SEX M
+1 BIRT
+2 DATE 1640
+1 DEAT
+2 DATE 17 JAN 1709
+2 PLAC [Saint-Hilaire] - Reims,51,Marne,Champagne-Ardenne,France
+1 OCCU Menuisier à Paris (Paroisse St Roch)
+1 FAMS @F10@
+0 @I23@ INDI
+1 NAME Louise /Bouquet/
+1 SEX F
+1 FAMS @F10@
+0 @I24@ INDI
+1 NAME Anthoine /Geruzet/
+1 SEX M
+1 BIRT
+2 DATE 1667
+2 PLAC [Saint-Roch] - Paris,75,Ville-de-Paris,Ile-de-France,France
+1 DEAT
+2 DATE 16 FEB 1755
+2 PLAC [Saint-Symphorien] - Reims,51,Marne,Champagne-Ardenne,France
+1 OCCU Maître Menuisier reçu le 25.01.1695 à Reims
+1 FAMC @F10@
+1 FAMS @F9@
+0 @I25@ INDI
+1 NAME Jacques /Geruzet/
+1 SEX M
+1 BIRT
+2 DATE 04 FEB 1705
+2 PLAC [Saint-Symphorien] - Reims,51,Marne,Champagne-Ardenne,France
+1 DEAT
+2 DATE 10 MAR 1774
+2 PLAC [Saint Pierre] - Reims,51,Marne,Champagne-Ardenne,France
+1 OCCU Marchand
+1 FAMC @F9@
+1 FAMS @F11@
+0 @I26@ INDI
+1 NAME Jeanne /Pierquin/
+1 SEX F
+1 FAMS @F11@
+0 @I27@ INDI
+1 NAME Laurent /Geruzet/
+1 SEX M
+1 BIRT
+2 DATE 25 SEP 1738
+2 PLAC [Saint Pierre] - Reims,51,Marne,Champagne-Ardenne,France
+1 DEAT
+2 DATE 1812
+2 PLAC Laon,02,Aisne,Picardie,France
+1 OCCU Marchand Drapier, Changeur du Roy
+1 FAMC @F11@
+1 FAMS @F12@
+1 FAMS @F13@
+1 FAMS @F14@
+1 NOTE * is is mandatory to have at least a three brackets delimited link
+2 CONT   to be able to access a miscellaneous note ?
+2 CONT * so a pointer to [[[Chantal]]] note.
+0 @I28@ INDI
+1 NAME Marie-Jeanne /Geruzet/
+1 SEX F
+1 BIRT
+2 DATE 31 DEC 1751
+1 BAPM
+2 PLAC [Saint Pierre] - Reims,51,Marne,Champagne-Ardenne,France
+1 DEAT
+2 DATE 08 JAN 1830
+2 PLAC Soissons,02,Aisne,Picardie,France
+1 FAMC @F11@
+0 @I29@ INDI
+1 NAME Marie /Dupond/
+1 SEX F
+1 BIRT
+2 DATE 1736
+2 PLAC Laon,02,Aisne,Picardie,France
+2 SOUR base michelbonnet
+1 DEAT
+2 DATE 25 NOV 1784
+2 PLAC Laon,02,Aisne,Picardie,France
+2 SOUR base michelbonnet
+1 FAMS @F12@
+0 @I30@ INDI
+1 NAME "Jean-Baptiste" Laurent /Geruzet/
+1 SEX M
+1 BIRT
+2 DATE 23 SEP 1768
+2 PLAC Laon,02,Aisne,Picardie,France
+1 DEAT
+2 DATE 20 MAY 1846
+2 PLAC Laon,02,Aisne,Picardie,France
+1 OCCU Officier d'infanterie, marchand teinturier
+1 FAMC @F12@
+1 FAMS @F15@
+0 @I31@ INDI
+1 NAME Charlotte /Laramee/
+1 SEX F
+1 BIRT
+2 DATE 1766
+1 DEAT
+2 DATE 14 JUN 1789
+1 FAMS @F13@
+1 SOUR base michelbonnet
+0 @I32@ INDI
+1 NAME Jeanne /Fache/
+1 SEX F
+1 BIRT
+2 DATE ABT 1750
+1 FAMS @F14@
+1 SOUR base michelbonnetg
+0 @I33@ INDI
+1 NAME Marie /Biemont/
+1 SEX F
+1 FAMS @F15@
+0 @I34@ INDI
+1 NAME Laurence /Geruzet/
+1 SEX F
+1 BIRT
+2 DATE 23 JAN 1802
+2 PLAC Nonancourt,27,Eure,Normandie,France
+1 DEAT
+2 DATE 18 APR 1866
+2 PLAC Amiens,80,Somme,Picardie,France
+1 FAMC @F15@
+0 @F1@ FAM
+1 MARR
+2 NOTE Rajout de notes avec retour à la ligne avec des tag html
+3 CONT 
+3 CONT 1880 - Habitent Yzernay naissance d'une fille
+3 CONT 
+3 CONT 1886 - Habitent la Verdelière (6 enfants) - Recensement Moulins: - Vue 
+3 CONC 23
+3 CONT 
+3 CONT 1891 - N'habitent plus Moulins, recensés au Temple (79) * Vue 7
+1 HUSB @I1@
+1 WIFE @I2@
+1 CHIL @I3@
+1 CHIL @I4@
+1 CHIL @I5@
+1 CHIL @I6@
+1 CHIL @I7@
+1 SOUR déjà décédés au mariage de sa fille Thérèse Eugénie
+0 @F2@ FAM
+1 MARR
+2 DATE 03 MAR 1835
+1 HUSB @I5@
+1 WIFE @I8@
+1 CHIL @I9@
+1 CHIL @I10@
+1 SOUR archives
+0 @F3@ FAM
+1 MARR
+2 DATE 1840
+2 PLAC Brisbane,Queensland,Australie
+2 SOUR inventé
+1 DIV
+2 DATE 1844
+2 SOUR inventé
+1 HUSB @I6@
+1 WIFE @I11@
+0 @F4@ FAM
+1 MARR
+2 DATE 1845
+2 PLAC Sydney,Nouvelle-Galles_du_Sud,Australie
+2 SOUR inventé
+1 HUSB @I6@
+1 WIFE @I12@
+0 @F5@ FAM
+1 MARR
+2 DATE 1570
+2 PLAC [Saint-Jacques] - Reims,51,Marne,Champagne-Ardenne,France
+1 HUSB @I13@
+1 WIFE @I14@
+1 CHIL @I15@
+0 @F6@ FAM
+1 MARR
+2 PLAC [Saint-Jacques] - Reims,51,Marne,Champagne-Ardenne,France
+1 HUSB @I15@
+1 WIFE @I16@
+1 CHIL @I17@
+0 @F7@ FAM
+1 MARR Y
+1 HUSB @I18@
+1 WIFE @I17@
+1 CHIL @I19@
+0 @F8@ FAM
+1 MARR Y
+1 HUSB @I20@
+1 WIFE @I19@
+1 CHIL @I21@
+0 @F10@ FAM
+1 MARR Y
+1 HUSB @I22@
+1 WIFE @I23@
+1 CHIL @I24@
+0 @F9@ FAM
+1 MARR
+2 DATE 17 JAN 1695
+2 PLAC [Saint-Jacques] - Reims,51,Marne,Champagne-Ardenne,France
+1 HUSB @I24@
+1 WIFE @I21@
+1 CHIL @I25@
+0 @F11@ FAM
+1 MARR
+2 DATE 02 AUG 1728
+2 PLAC [Saint Pierre] - Reims,51,Marne,Champagne-Ardenne,France
+1 HUSB @I25@
+1 WIFE @I26@
+1 CHIL @I27@
+1 CHIL @I28@
+0 @F12@ FAM
+1 MARR
+2 DATE 28 DEC 1763
+2 PLAC [Eglise St Rémi] - Laon,02,Aisne,Picardie,France
+1 HUSB @I27@
+1 WIFE @I29@
+1 CHIL @I30@
+0 @F13@ FAM
+1 MARR
+2 DATE 25 MAR 1786
+2 PLAC Reims,51,Marne,Champagne-Ardenne,France
+2 SOUR base michelbonnet
+1 HUSB @I27@
+1 WIFE @I31@
+0 @F14@ FAM
+1 MARR
+2 DATE 30 OCT 1794
+2 PLAC Paris,75000,Ville-de-Paris,Ile-de-France,France
+2 SOUR base michelbonnet
+1 HUSB @I27@
+1 WIFE @I32@
+0 @F15@ FAM
+1 MARR
+2 DATE @#DFRENCH R@ 21 FRUC 2
+2 PLAC [Mairie] - Reims,51,Marne,Champagne-Ardenne,France
+1 HUSB @I30@
+1 WIFE @I33@
+1 CHIL @I34@
+0 TRLR
