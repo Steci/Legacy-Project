@@ -6,8 +6,8 @@ from datetime import date
 from enum import Enum
 import json
 
-from event import Event, Witness
-from date import Date
+from models.event import Event, Witness
+from models.date import Date
 
 class RelationKind(Enum):
     MARRIED = "married"
