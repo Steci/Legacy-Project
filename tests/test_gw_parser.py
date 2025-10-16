@@ -2,18 +2,21 @@ import sys
 import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../src")))
 
+from unittest.mock import mock_open, patch
+
 import pytest
-from parsers.parser import GWParser
-from parsers.models import GWDatabase, Family, Person, NoteBlock, RelationBlock
-from parsers.utils import canonical_key_from_tokens
+from parsers.gw.parser import GWParser
+from parsers.gw.models import GWDatabase, Family, Person, NoteBlock, RelationBlock
+from parsers.gw.utils import canonical_key_from_tokens
 
 @pytest.fixture
 def parser():
     return GWParser(debug=True)
 
-def test_parse_file(parser, mocker):
-    mocker.patch("builtins.open", mocker.mock_open(read_data="fam CORNO Joseph_Marie_Vincent + THOMAS Marie_Julienne"))
-    db = parser.parse_file("mock_file.gw")
+def test_parse_file(parser):
+    fake_data = "fam CORNO Joseph_Marie_Vincent + THOMAS Marie_Julienne"
+    with patch("builtins.open", mock_open(read_data=fake_data)):
+        db = parser.parse_file("mock_file.gw")
     assert isinstance(db, GWDatabase)
     assert len(db.families) == 1
 
