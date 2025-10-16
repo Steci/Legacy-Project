@@ -5,9 +5,9 @@ from dataclasses import dataclass, field
 from datetime import datetime
 import json
 
-from event import Event
-from date import Date
-from params import Sex, Title, Relation, PEventType
+from models.event import Event
+from models.date import Date
+from .params import Sex, Title, Relation, PEventType
 
 @dataclass
 class Person:
