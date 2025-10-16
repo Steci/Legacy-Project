@@ -340,6 +340,13 @@ class GedcomParser(BaseParser):
         if date_record:
             self.database.header["date"] = date_record.value
 
+        note_records = self._find_all_sub_records(record, "NOTE")
+        if note_records:
+            note_segments = [self._compose_note_text(note) for note in note_records]
+            combined = "<br>\n".join(seg for seg in note_segments if seg)
+            if combined:
+                self.database.header["notes_db"] = combined
+
     def _parse_individual(self, record: GedcomRecord) -> GedcomPerson:
         """Parse individual record using PersonParsingUtils to reduce complexity."""
         person = GedcomPerson(xref_id=record.xref_id)
@@ -777,18 +784,19 @@ class GedcomParser(BaseParser):
             text += " "
 
         for sub_rec in note_record.sub_records:
-            value = sub_rec.value
-            if not value:
-                continue
-            stripped = self._strip_spaces(value)
-            end_space = value.endswith(" ")
+            raw_value = sub_rec.value or ""
+            stripped = self._strip_spaces(raw_value)
+            end_space = raw_value.endswith(" ")
 
             if sub_rec.tag == "CONC":
+                if not raw_value:
+                    continue
                 text += stripped
                 if end_space:
                     text += " "
             elif sub_rec.tag == "CONT":
-                text += "<br>\n" + stripped
+                text += "<br>\n"
+                text += stripped
                 if end_space:
                     text += " "
 
