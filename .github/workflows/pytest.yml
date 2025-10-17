@@ -1,7 +1,11 @@
+# This workflow runs pytest tests on the entire project
+
 name: Launch Pytest
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - main
 
 jobs:
   test:

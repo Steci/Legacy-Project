@@ -1,3 +1,5 @@
+# This workflow performs a functional test on the entire Geneweb project, the report is available in the logs
+
 name: Geneweb Functional Test
 
 on:
