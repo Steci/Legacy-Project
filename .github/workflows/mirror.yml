@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
 
 env:
-  MIRROR_URL: "git@github.com:EpitechPGE45-2025/G-ING-900-PAR-9-1-legacy-20.git"
+  MIRROR_URL: "git@github.com:LegacyProjectGeneweb/LegacyProject"
 
 jobs:
   push_to_mirror:
