@@ -1,9 +1,11 @@
-# A report is available in GitHub Actions with the coverage rate
+# This workflow checks the coverage rate, the report is available in the logs
 
 name: Check the coverage rate
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - main
 
 jobs:
   test-coverage:
