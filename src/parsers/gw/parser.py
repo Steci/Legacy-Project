@@ -25,6 +25,11 @@ class GWParser:
         self.db = GWDatabase()
         self.debug = debug
 
+    def reset(self) -> None:
+        """Clear previously parsed data so the parser can be reused."""
+
+        self.db = GWDatabase()
+
     def parse_file(self, path: str) -> GWDatabase:
         with open(path, "r", encoding="utf-8", errors="replace") as f:
             return self.parse_text(f.read())
