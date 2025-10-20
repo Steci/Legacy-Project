@@ -1,6 +1,7 @@
 from typing import List, Optional, TYPE_CHECKING
 
-from ...common.base_models import BaseEvent
+from models.event import Event, Place
+
 from ..event_utils import EventParsingUtils
 from ..models import GedcomFamily, GedcomRecord
 
@@ -14,8 +15,9 @@ class FamilyParserMixin:
     relationship_processor: "SpecialRelationshipProcessor"
 
     def _parse_family(self, record: GedcomRecord) -> GedcomFamily:
-        """Parse family record"""
-        family = GedcomFamily(xref_id=record.xref_id)
+        """Parse family record into the new domain model wrapper."""
+
+        family = GedcomFamily(xref_id=record.xref_id or "")
 
         husb_record = self._find_sub_record(record, "HUSB")
         if husb_record:
@@ -26,14 +28,15 @@ class FamilyParserMixin:
             family.wife_id = wife_record.value
 
         for chil_rec in self._find_all_sub_records(record, "CHIL"):
-            family.children_ids.append(chil_rec.value)
+            if chil_rec.value and chil_rec.value not in family.children_ids:
+                family.children_ids.append(chil_rec.value)
 
         family.events = self._parse_all_family_events(record, family.xref_id)
         self._finalize_family_events(family)
 
         base_note = self._extract_notes(record)
         source_details = self._extract_source(record, f"{record.tag} SOUR")
-        family.source = self._apply_default_source(source_details.combined_text())
+        family.sources = self._apply_default_source(source_details.combined_text())
 
         note_with_sources = self._merge_notes(base_note, source_details.combined_notes())
 
@@ -44,7 +47,7 @@ class FamilyParserMixin:
         additional_events = [
             evt
             for evt in family.events
-            if (evt.event_type or "").upper() not in {"MARR", "DIV", "ANUL", "SEP", "SEPA"}
+            if getattr(evt, "gedcom_tag", evt.name or "").upper() not in {"MARR", "DIV", "ANUL", "SEP", "SEPA"}
         ]
         event_note_segments.extend(self._collect_source_note_segments(*additional_events))
         if event_note_segments:
@@ -53,7 +56,7 @@ class FamilyParserMixin:
                 "<br>\n".join(event_note_segments),
             )
 
-        family.note = note_with_sources
+        family.notes = note_with_sources
         family.witnesses = self.relationship_processor.consume_family_witnesses(family.xref_id)
         adoption_map = self.relationship_processor.consume_family_adoptions(family.xref_id)
         if adoption_map:
@@ -62,10 +65,10 @@ class FamilyParserMixin:
         record.used = True
         return family
 
-    def _parse_all_family_events(self, record: GedcomRecord, family_xref: str) -> List[BaseEvent]:
+    def _parse_all_family_events(self, record: GedcomRecord, family_xref: str) -> List[Event]:
         """Parse all family-level events mirroring ged2gwb."""
 
-        events: List[BaseEvent] = []
+        events: List[Event] = []
 
         for sub_record in record.sub_records:
             tag = (sub_record.tag or "").upper()
@@ -78,11 +81,13 @@ class FamilyParserMixin:
 
         return events
 
-    def _build_family_event(self, event_record: GedcomRecord, family_xref: str) -> Optional[BaseEvent]:
+    def _build_family_event(self, event_record: GedcomRecord, family_xref: str) -> Optional[Event]:
         """Create a family event entry mirroring treat_fam_fevent."""
 
         event_type = self._determine_family_event_type(event_record)
-        event = BaseEvent(event_type=event_type)
+        display_name = event_type
+        event = Event(name=display_name)
+        setattr(event, "gedcom_tag", event_type)
 
         date_record = self._find_sub_record(event_record, "DATE")
         if date_record:
@@ -90,12 +95,12 @@ class FamilyParserMixin:
 
         place_record = self._find_sub_record(event_record, "PLAC")
         if place_record:
-            event.place = place_record.value
+            event.place = Place(other=place_record.value)
 
         event.note = self._extract_notes(event_record)
         source_details = self._extract_source(event_record, f"{event_record.tag} SOUR")
         event.source = source_details.combined_text()
-        event.source_notes = source_details.combined_notes()
+        setattr(event, "source_notes", source_details.combined_notes())
 
         name_info = self._strip_spaces(event_record.value)
         if name_info and name_info.upper() != "Y":
@@ -116,10 +121,11 @@ class FamilyParserMixin:
             return type_record.value.upper()
         return (event_record.tag or "").upper()
 
-    def _should_include_event(self, event: BaseEvent, event_record: GedcomRecord) -> bool:
+    def _should_include_event(self, event: Event, event_record: GedcomRecord) -> bool:
         """Decide whether an event contains meaningful data to retain."""
 
-        if event.date or event.place or event.note or event.source or event.source_notes:
+        place_value = event.place.other if event.place else ""
+        if event.date or place_value or event.note or event.source or getattr(event, "source_notes", ""):
             return True
         value_text = self._strip_spaces(event_record.value).upper()
         if value_text == "Y":
@@ -135,21 +141,21 @@ class FamilyParserMixin:
             family.events = self._sort_events(family.events, self._FAMILY_EVENT_ORDER)
 
             for event in family.events:
-                event_type = (event.event_type or "").upper()
+                event_type = getattr(event, "gedcom_tag", event.name or "").upper()
                 field_name = self._FAMILY_PRIMARY_EVENT_MAP.get(event_type)
                 if not field_name:
                     continue
                 self._merge_family_primary_event(family, field_name, event)
 
-        marriage_event_type = (family.marriage.event_type or "").upper() if family.marriage else ""
+        marriage_event_type = getattr(family.marriage, "gedcom_tag", family.marriage.name if family.marriage else "").upper() if family.marriage else ""
         relation = self._FAMILY_RELATION_BY_EVENT.get(marriage_event_type)
         if relation:
-            family.relation_type = relation
+            family.relation = relation
 
-    def _merge_family_primary_event(self, family: GedcomFamily, field_name: str, candidate: BaseEvent) -> None:
+    def _merge_family_primary_event(self, family: GedcomFamily, field_name: str, candidate: Event) -> None:
         """Merge candidate data into family primary event fields."""
 
-        primary: Optional[BaseEvent] = getattr(family, field_name)
+        primary: Optional[Event] = getattr(family, field_name)
         if primary is None:
             setattr(family, field_name, self._clone_event(candidate))
             return
@@ -163,3 +169,4 @@ class FamilyParserMixin:
         primary.source_notes = self._merge_notes(
             getattr(primary, "source_notes", ""), getattr(candidate, "source_notes", "")
         )
+

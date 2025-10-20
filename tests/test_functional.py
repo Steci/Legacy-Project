@@ -1,4 +1,10 @@
+import os
+import sys
+
 import pytest
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../src")))
+
 from parsers.parser import GWParser
 from parsers.models import GWDatabase
 
@@ -57,10 +63,10 @@ def test_parse_children_block_normal_case(parser):
     assert len(db.families) == 1, "Expected one family to be parsed"
     family = db.families[0]
     assert len(family.children) == 2, "Expected two children to be parsed"
-    assert family.children[0][1].last == "Corno", "First child's last name mismatch"
-    assert family.children[0][1].first == "Yann", "First child's first name mismatch"
-    assert family.children[1][1].last == "Thomas", "Second child's last name mismatch"
-    assert family.children[1][1].first == "Marie_Julienne", "Second child's first name mismatch"
+    assert family.children[0][1].surname == "Corno", "First child's last name mismatch"
+    assert family.children[0][1].first_name == "Yann", "First child's first name mismatch"
+    assert family.children[1][1].surname == "Thomas", "Second child's last name mismatch"
+    assert family.children[1][1].first_name == "Marie_Julienne", "Second child's first name mismatch"
 
 def test_parse_notes_block(parser):
     """

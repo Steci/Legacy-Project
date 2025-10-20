@@ -1,8 +1,9 @@
 from dataclasses import dataclass, field
 from typing import List, Optional, Tuple, TYPE_CHECKING
 
-from ...common.base_models import BaseEvent, BaseNote, BaseSource
-from ..models import GedcomRecord
+from models.event import Event
+
+from ..models import GedcomRecord, Note, Source
 
 if TYPE_CHECKING:
 	from ..models import GedcomDatabase
@@ -61,7 +62,8 @@ class NoteSourceMixin:
 			referenced = self._note_records.get(note_record.value)
 			if referenced:
 				return self._compose_note_text(referenced)
-			return self.database.notes.get(note_record.value, BaseNote()).content
+			stored = self.database.notes.get(note_record.value)
+			return stored.content if stored else Note().content
 
 		return self._compose_note_text(note_record)
 
@@ -275,7 +277,7 @@ class NoteSourceMixin:
 			return addition
 		return f"{base}<br>\n{addition}"
 
-	def _collect_source_note_segments(self, *events: Optional[BaseEvent]) -> List[str]:
+	def _collect_source_note_segments(self, *events: Optional[Event]) -> List[str]:
 		"""Collect source-derived note fragments from events."""
 
 		segments: List[str] = []
@@ -295,9 +297,9 @@ class NoteSourceMixin:
 			return self.default_source
 		return text
 
-	def _parse_source_record(self, record: GedcomRecord) -> BaseSource:
+	def _parse_source_record(self, record: GedcomRecord) -> Source:
 		"""Parse source record"""
-		source = BaseSource(source_id=record.xref_id or "")
+		source = Source(source_id=record.xref_id or "")
 
 		titl_record = self._find_sub_record(record, "TITL")
 		if titl_record:

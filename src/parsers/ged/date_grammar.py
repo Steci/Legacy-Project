@@ -1,9 +1,9 @@
-"""
-Date grammar parser for GEDCOM dates.
-Extracted from main parser to reduce cyclomatic complexity while preserving OCaml compatibility.
-"""
-from typing import List, Tuple, Optional
-from ..common.base_models import BaseDate, DatePrecision
+"""Date grammar parser for GEDCOM dates aligned with the new domain model."""
+
+from typing import List, Optional, Tuple
+
+from models.date import Calendar, Date, DMY, Precision
+
 from .calendar_utils import CalendarUtils
 
 
@@ -106,7 +106,7 @@ class DateGrammarParser:
         return total if total <= 12 else 0  # Only return valid month values
     
     @staticmethod
-    def parse_date_grammar(tokens: List[Tuple[str, str]]) -> Optional[BaseDate]:
+    def parse_date_grammar(tokens: List[Tuple[str, str]]) -> Optional[Date]:
         """Parse date using grammar rules following OCaml EXTEND date_value logic."""
         if not tokens:
             return None
@@ -131,7 +131,7 @@ class DateGrammarParser:
                 return token
             return ("EOI", "")
         
-        def parse_date_or_text(self) -> Optional[BaseDate]:
+        def parse_date_or_text(self) -> Optional[Date]:
             """Parse date_or_text production."""
             token_type, token_value = self.peek()
             
@@ -146,25 +146,25 @@ class DateGrammarParser:
             # Handle simple date patterns
             return self._parse_simple_date()
         
-        def _parse_date_modifier(self, modifier: str) -> Optional[BaseDate]:
+        def _parse_date_modifier(self, modifier: str) -> Optional[Date]:
             """Parse date modifiers (BEF, AFT, ABT, etc.)."""
             if modifier == "BEF":
                 self.consume()
                 date = self.parse_date_or_text()
                 if date:
-                    date.precision = DatePrecision.BEFORE
+                    date.dmy.prec = Precision.BEFORE
                 return date
             elif modifier == "AFT":
                 self.consume()
                 date = self.parse_date_or_text()
                 if date:
-                    date.precision = DatePrecision.AFTER
+                    date.dmy.prec = Precision.AFTER
                 return date
             elif modifier in ["ABT", "ABOUT", "CAL", "EST"]:
                 self.consume()
                 date = self.parse_date_or_text()
                 if date:
-                    date.precision = DatePrecision.ABOUT
+                    date.dmy.prec = Precision.ABOUT
                 return date
             elif modifier == "BET":
                 return self._parse_between_dates()
@@ -174,19 +174,19 @@ class DateGrammarParser:
                 # Regular date parsing
                 return self._parse_simple_date()
         
-        def _parse_calendar_date(self) -> Optional[BaseDate]:
+        def _parse_calendar_date(self) -> Optional[Date]:
             """Parse calendar-prefixed dates."""
             calendar_token = self.consume()
             _, calendar_value = calendar_token
             
             # Extract calendar type
-            calendar = "GREGORIAN"  # Default
+            calendar = Calendar.GREGORIAN
             if "JULIAN" in calendar_value:
-                calendar = "JULIAN"
+                calendar = Calendar.JULIAN
             elif "FRENCH" in calendar_value:
-                calendar = "FRENCH"
+                calendar = Calendar.FRENCH
             elif "HEBREW" in calendar_value:
-                calendar = "HEBREW"
+                calendar = Calendar.HEBREW
             
             # Parse the actual date
             date = self._parse_simple_date()
@@ -194,9 +194,9 @@ class DateGrammarParser:
                 date.calendar = calendar
             return date
         
-        def _parse_simple_date(self) -> Optional[BaseDate]:
+        def _parse_simple_date(self) -> Optional[Date]:
             """Parse simple date patterns (day/month/year combinations)."""
-            date = BaseDate()
+            date = Date(dmy=DMY(), calendar=Calendar.GREGORIAN)
             
             # Try to parse day, month, year in various combinations
             token_type, token_value = self.peek()
@@ -211,13 +211,13 @@ class DateGrammarParser:
                     month_str = self.consume()[1]
                     month = CalendarUtils.parse_month(month_str)
                     if month > 0:
-                        date.day = first_num
-                        date.month = month
+                        date.dmy.day = first_num
+                        date.dmy.month = month
                         
                         # Check for year
                         token_type, token_value = self.peek()
                         if token_type == "INT":
-                            date.year = int(self.consume()[1])
+                            date.dmy.year = int(self.consume()[1])
                         return date
                         
                 elif token_type == "SLASH":
@@ -238,23 +238,23 @@ class DateGrammarParser:
                                 # Determine if it's DD/MM/YYYY or MM/DD/YYYY
                                 if first_num <= 12 and second_num <= 31:
                                     # Ambiguous - use MM/DD/YYYY (US format)
-                                    date.month = first_num
-                                    date.day = second_num
-                                    date.year = third_num
+                                    date.dmy.month = first_num
+                                    date.dmy.day = second_num
+                                    date.dmy.year = third_num
                                 else:
                                     # DD/MM/YYYY
-                                    date.day = first_num
-                                    date.month = second_num
-                                    date.year = third_num
+                                    date.dmy.day = first_num
+                                    date.dmy.month = second_num
+                                    date.dmy.year = third_num
                                 return date
                         else:
                             # Just MM/DD or DD/MM
                             if first_num <= 12:
-                                date.month = first_num
-                                date.day = second_num
+                                date.dmy.month = first_num
+                                date.dmy.day = second_num
                             else:
-                                date.day = first_num
-                                date.month = second_num
+                                date.dmy.day = first_num
+                                date.dmy.month = second_num
                             return date
                             
                 elif token_type == "INT":
@@ -264,21 +264,21 @@ class DateGrammarParser:
                     if token_type == "INT":
                         third_num = int(self.consume()[1])
                         # Assume DD MM YYYY format
-                        date.day = first_num
-                        date.month = second_num
-                        date.year = third_num
+                        date.dmy.day = first_num
+                        date.dmy.month = second_num
+                        date.dmy.year = third_num
                         return date
                     else:
                         # Just two numbers - assume MM YYYY
-                        date.month = first_num
-                        date.year = second_num
+                        date.dmy.month = first_num
+                        date.dmy.year = second_num
                         return date
                 else:
                     # Just a single number - could be year
                     if first_num > 31:
-                        date.year = first_num
+                        date.dmy.year = first_num
                     else:
-                        date.day = first_num
+                        date.dmy.day = first_num
                     return date
                     
             elif token_type == "ID":
@@ -286,26 +286,26 @@ class DateGrammarParser:
                 month_str = self.consume()[1]
                 month = CalendarUtils.parse_month(month_str)
                 if month > 0:
-                    date.month = month
+                    date.dmy.month = month
                     
                     # Check for day/year
                     token_type, token_value = self.peek()
                     if token_type == "INT":
                         num = int(self.consume()[1])
                         if num <= 31:
-                            date.day = num
+                            date.dmy.day = num
                             # Check for year
                             token_type, token_value = self.peek()
                             if token_type == "INT":
-                                date.year = int(self.consume()[1])
+                                date.dmy.year = int(self.consume()[1])
                         else:
-                            date.year = num
+                            date.dmy.year = num
                     return date
             
             # If we get here, couldn't parse - return empty date
-            return date if date.day or date.month or date.year else None
+            return date if date.dmy.day or date.dmy.month or date.dmy.year else None
         
-        def _parse_between_dates(self) -> Optional[BaseDate]:
+        def _parse_between_dates(self) -> Optional[Date]:
             """Parse BET date1 AND date2 pattern."""
             self.consume()  # consume BET
             
@@ -318,21 +318,21 @@ class DateGrammarParser:
                 end_date = self.parse_date_or_text()
                 
                 if start_date:
-                    start_date.precision = DatePrecision.BETWEEN
+                    start_date.dmy.prec = Precision.MAYBE
                     # Could store end_date in a range field if needed
                     return start_date
             
             return start_date
         
-        def _parse_range_dates(self) -> Optional[BaseDate]:
+        def _parse_range_dates(self) -> Optional[Date]:
             """Parse FROM/TO date patterns."""
             range_type = self.consume()[1]  # FROM or TO
             
             date = self.parse_date_or_text()
             if date:
                 if range_type == "FROM":
-                    date.precision = DatePrecision.AFTER
+                    date.dmy.prec = Precision.AFTER
                 else:  # TO
-                    date.precision = DatePrecision.BEFORE
+                    date.dmy.prec = Precision.BEFORE
             
             return date

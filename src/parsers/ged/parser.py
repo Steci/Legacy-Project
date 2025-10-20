@@ -1,7 +1,8 @@
 import logging
 from typing import List, Union
 
-from ..common.base_models import BaseNote, BaseParser, BaseDate, DatePrecision, RelationType
+from ..common.base_models import BaseNote, BaseParser, RelationType
+from models.date import Date, Precision
 from .event_utils import EventParsingUtils, SpecialRelationshipProcessor
 from .mixins.base_helpers import RecordTraversalMixin
 from .mixins.charset_mixin import CharsetMixin
@@ -232,17 +233,18 @@ class GedcomParser(
         for person in self.database.individuals.values():
             self._fix_person_genealogos_issues(person)
                 
-    def _fix_genealogos_date(self, date: BaseDate):
-        """Fix date formatting quirks observed in Genealogos exports."""
+    def _fix_genealogos_date(self, date: Date) -> None:
+        """Normalize legacy Genealogos markers on new Date objects."""
 
-        raw_text = getattr(date, "text", None) or date.original_text
-        if raw_text and "~" in raw_text:
-            date.precision = DatePrecision.ABOUT
-            cleaned = raw_text.replace("~", "").strip()
-            if hasattr(date, "text"):
-                date.text = cleaned
-            else:
-                date.original_text = cleaned
+        raw_text = (getattr(date, "text", "") or "").strip()
+        if "~" not in raw_text:
+            return
+
+        cleaned = raw_text.replace("~", "").strip()
+        if getattr(date, "dmy", None) and getattr(date.dmy, "prec", None) != Precision.ABOUT:
+            date.dmy.prec = Precision.ABOUT
+        if hasattr(date, "text"):
+            date.text = cleaned
             
     def _fix_genealogos_name_case(self, surname: str) -> str:
         """Fix name case issues from genealogos software."""
@@ -261,8 +263,9 @@ class GedcomParser(
             self._fix_genealogos_date(person.death.date)
             
         # Fix surname capitalization
-        if person.name.surname:
-            person.name.surname = self._fix_genealogos_name_case(person.name.surname)
+        surname = (person.surname or "").strip()
+        if surname:
+            person.surname = self._fix_genealogos_name_case(surname)
 
 def parse_gedcom_file(file_path: str) -> GedcomDatabase:
     """Convenience function to parse a GEDCOM file"""
