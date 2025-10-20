@@ -1,8 +1,8 @@
 import logging
-from typing import List, Union
+from typing import List, Optional, Union
 
-from ..common.base_models import BaseNote, BaseParser, RelationType
 from models.date import Date, Precision
+from models.family.family import RelationKind
 from .event_utils import EventParsingUtils, SpecialRelationshipProcessor
 from .mixins.base_helpers import RecordTraversalMixin
 from .mixins.charset_mixin import CharsetMixin
@@ -10,7 +10,7 @@ from .mixins.family_mixin import FamilyParserMixin
 from .mixins.notes_sources import NoteSourceMixin, SourceCollection
 from .mixins.person_mixin import PersonParserMixin
 from .mixins.record_reader import RecordReaderMixin
-from .models import GedcomDatabase, GedcomFamily, GedcomPerson, GedcomRecord
+from .models import GedcomDatabase, GedcomFamily, GedcomPerson, GedcomRecord, Note
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +25,6 @@ class GedcomParser(
     NoteSourceMixin,
     PersonParserMixin,
     FamilyParserMixin,
-    BaseParser,
 ):
     """GEDCOM parser following the logic of geneweb ged2gwb.ml"""
 
@@ -55,15 +54,15 @@ class GedcomParser(
         "SEPA": "divorce",
     }
     _FAMILY_RELATION_BY_EVENT = {
-        "MARR": RelationType.MARRIED,
-        "ENGA": RelationType.ENGAGED,
-        "MARB": RelationType.MARRIED,
-        "MARC": RelationType.MARRIED,
-        "MARL": RelationType.MARRIED,
-        "ANUL": RelationType.UNKNOWN,
-        "DIV": RelationType.DIVORCED,
-        "SEP": RelationType.SEPARATED,
-        "SEPA": RelationType.SEPARATED,
+        "MARR": RelationKind.MARRIED,
+        "ENGA": RelationKind.ENGAGED,
+        "MARB": RelationKind.MARRIED,
+        "MARC": RelationKind.MARRIED,
+        "MARL": RelationKind.MARRIED,
+        "ANUL": RelationKind.UNKNOWN,
+        "DIV": RelationKind.DIVORCED,
+        "SEP": RelationKind.SEPARATED,
+        "SEPA": RelationKind.SEPARATED,
     }
     
     def __init__(self):
@@ -74,6 +73,8 @@ class GedcomParser(
         self.database = GedcomDatabase()
         self._note_records = {}
         self._source_records = {}
+        self.errors: List[str] = []
+        self.warnings: List[str] = []
         
         # Configuration options (similar to ged2gwb.ml)
         self.lowercase_first_names = False
@@ -88,6 +89,35 @@ class GedcomParser(
         
         # Special relationship tracking using utility class
         self.relationship_processor = SpecialRelationshipProcessor()
+
+    def add_error(self, message: str, line_number: Optional[int] = None) -> None:
+        """Record a parsing error, keeping original line context when provided."""
+        if line_number is not None:
+            self.errors.append(f"Line {line_number}: {message}")
+        else:
+            self.errors.append(message)
+
+    def add_warning(self, message: str, line_number: Optional[int] = None) -> None:
+        """Record a warning encountered during GEDCOM import."""
+        if line_number is not None:
+            self.warnings.append(f"Line {line_number}: {message}")
+        else:
+            self.warnings.append(message)
+
+    def has_errors(self) -> bool:
+        """Check whether any parsing errors were recorded."""
+        return bool(self.errors)
+
+    def get_error_summary(self) -> str:
+        """Return a formatted summary of accumulated errors and warnings."""
+        summary: List[str] = []
+        if self.errors:
+            summary.append(f"Errors ({len(self.errors)}):")
+            summary.extend(f"  - {error}" for error in self.errors)
+        if self.warnings:
+            summary.append(f"Warnings ({len(self.warnings)}):")
+            summary.extend(f"  - {warning}" for warning in self.warnings)
+        return "\n".join(summary) if summary else "No errors or warnings"
 
     def parse_file(self, file_path: str) -> GedcomDatabase:
         """Parse a GEDCOM file while preserving original byte content."""
@@ -170,7 +200,7 @@ class GedcomParser(
             if record.tag == "NOTE" and record.xref_id:
                 self._note_records[record.xref_id] = record
                 note_content = self._render_note_content(record)
-                self.database.notes[record.xref_id] = BaseNote(content=note_content)
+                self.database.notes[record.xref_id] = Note(content=note_content)
             elif record.tag == "SOUR" and record.xref_id:
                 self._source_records[record.xref_id] = record
                 source = self._parse_source_record(record)

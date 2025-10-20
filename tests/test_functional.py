@@ -5,8 +5,8 @@ import pytest
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../src")))
 
-from parsers.parser import GWParser
-from parsers.models import GWDatabase
+from parsers.gw.parser import GWParser
+from parsers.gw.models import GWDatabase
 
 @pytest.fixture
 def parser():
