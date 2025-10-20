@@ -55,16 +55,16 @@ def test_parse_children_block(parser):
     i = parser._parse_children_block(0, lines, family)
     assert i == 4
     assert len(family.children) == 2
-    assert family.children[0][1].last == "Corno"
-    assert family.children[1][1].last == "Thomas"
+    assert family.children[0][1].surname == "Corno"
+    assert family.children[1][1].surname == "Thomas"
 
 def test_parse_child_line(parser):
     line = "- h Corno Yann 1935 #bp Soisy 1997"
     family = Family()
     gender, person, remaining = parser._parse_child_line(line, family)
     assert gender == "h"
-    assert person.last == "Corno"
-    assert person.first == "Yann"
+    assert person.surname == "Corno"
+    assert person.first_name == "Yann"
 
 def test_parse_notes_block(parser):
     lines = [

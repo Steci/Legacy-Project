@@ -4,7 +4,10 @@ from __future__ import annotations
 import re
 from typing import Dict, Iterable, List, Optional, Sequence, Set, Tuple
 
-from ..common.base_models import BaseDate, BaseEvent, DatePrecision, Sex
+from models.date import Date, Precision
+from models.event import Event, Place
+from models.person.params import Sex
+
 from ..ged.models import GedcomDatabase, GedcomFamily, GedcomPerson
 
 
@@ -41,31 +44,65 @@ _FRENCH_MONTHS = {
 }
 
 
-def _format_date(date: Optional[BaseDate]) -> str:
+def _event_tag(event: Optional[Event]) -> str:
+    if not event:
+        return ""
+    tag = getattr(event, "gedcom_tag", None)
+    if tag:
+        return str(tag)
+    name = getattr(event, "name", "")
+    return str(name or "")
+
+
+def _place_to_text(place: Optional[Place]) -> str:
+    if not place:
+        return ""
+
+    components = [
+        getattr(place, "other", ""),
+        getattr(place, "town", ""),
+        getattr(place, "county", ""),
+        getattr(place, "district", ""),
+        getattr(place, "region", ""),
+        getattr(place, "country", ""),
+    ]
+    ordered: List[str] = []
+    for component in components:
+        value = (component or "").strip()
+        if value and value not in ordered:
+            ordered.append(value)
+    return ", ".join(ordered)
+
+
+def _format_date(date: Optional[Date]) -> str:
     """Return a GeneWeb-friendly date string."""
 
     if not date:
         return ""
 
-    text = (date.original_text or "").strip()
+    text = (date.text or "").strip()
     if text.startswith("@#"):
         return _format_special_calendar(text)
 
-    if date.precision == DatePrecision.BETWEEN and text:
+    upper_text = text.upper()
+    if upper_text.startswith("BET "):
         between = _format_between_expression(text)
         if between:
             return between
 
     qualifier = ""
-    if date.precision == DatePrecision.BEFORE:
+    precision = date.dmy.prec if date.dmy else None
+    if precision == Precision.BEFORE:
         qualifier = "<"
-    elif date.precision == DatePrecision.AFTER:
+    elif precision == Precision.AFTER:
         qualifier = ">"
-    elif date.precision in {DatePrecision.ABOUT, DatePrecision.MAYBE}:
+    elif precision == Precision.ABOUT:
         qualifier = "~"
+    elif precision in {Precision.MAYBE, Precision.OR_YEAR, Precision.YEAR_INT}:
+        return text
 
     qualifier_text = text
-    if qualifier and qualifier_text.upper().startswith(("BEF", "AFT", "ABT", "EST")):
+    if qualifier and upper_text.startswith(("BEF", "AFT", "ABT", "EST")):
         qualifier_text = qualifier_text[3:].strip()
 
     value = _format_numeric_components(date)
@@ -107,10 +144,13 @@ def _format_between_expression(text: str) -> str:
     return ""
 
 
-def _format_numeric_components(date: BaseDate) -> str:
-    day = date.day or 0
-    month = date.month or 0
-    year = date.year or 0
+def _format_numeric_components(date: Optional[Date]) -> str:
+    if not date or not date.dmy:
+        return ""
+
+    day = date.dmy.day or 0
+    month = date.dmy.month or 0
+    year = date.dmy.year or 0
 
     if day and month and year:
         return f"{day}/{month}/{year}"
@@ -255,9 +295,9 @@ class GenewebExporter:
             if not child:
                 continue
             child_objects.append(child)
-            if not child.source:
+            if not child.psources:
                 continue
-            token = self._format_source_token(child.source)
+            token = self._format_source_token(child.psources)
             if not token:
                 continue
             child_source_counts[token] = child_source_counts.get(token, 0) + 1
@@ -273,8 +313,8 @@ class GenewebExporter:
         marriage_tokens = self._format_marriage_bridge(family.marriage)
         self._lines.append("fam " + " ".join(husband_tokens + marriage_tokens + wife_tokens))
 
-        if family.source:
-            self._lines.append(f"src {self._format_token(family.source)}")
+        if family.sources:
+            self._lines.append(f"src {self._format_token(family.sources)}")
 
         for token in child_source_order:
             if token in shared_child_sources:
@@ -286,8 +326,8 @@ class GenewebExporter:
         for _kind, event in family_events:
             if event.note:
                 note_segments.append(event.note)
-        if family.note:
-            note_segments.append(family.note)
+        if family.notes:
+            note_segments.append(family.notes)
 
         note_payload = "\n".join(filter(None, note_segments))
         note_lines = self._format_note_lines(note_payload)
@@ -316,9 +356,9 @@ class GenewebExporter:
             note_order.append(husband)
 
         for person in note_order:
-            if not person.note or person.xref_id in self._emitted_notes:
+            if not person.notes or person.xref_id in self._emitted_notes:
                 continue
-            note_lines = self._format_note_lines(person.note)
+            note_lines = self._format_note_lines(person.notes)
             if not note_lines:
                 continue
             self._lines.append("")
@@ -354,12 +394,12 @@ class GenewebExporter:
         self._lines.append("end pevt")
         self._lines.append("")
 
-    def _collect_person_events(self, person: GedcomPerson) -> Sequence[Tuple[str, BaseEvent]]:
-        events: List[Tuple[str, BaseEvent]] = []
+    def _collect_person_events(self, person: GedcomPerson) -> Sequence[Tuple[str, Event]]:
+        events: List[Tuple[str, Event]] = []
         seen: Set[Tuple[str, Tuple]] = set()
         allowed = {"birt", "bapt", "bapm", "chr", "deat", "bur", "buri"}
 
-        def add(kind: str, event: Optional[BaseEvent]) -> None:
+        def add(kind: str, event: Optional[Event]) -> None:
             if not event:
                 return
             normalized_kind = self._normalize_person_event_kind(kind)
@@ -376,7 +416,7 @@ class GenewebExporter:
         add("deat", person.death)
         add("buri", person.burial)
         for extra in person.events:
-            add(extra.event_type or "event", extra)
+            add(_event_tag(extra), extra)
         return events
 
     def _prepare_display_name_tokens(self, persons: Iterable[GedcomPerson]) -> None:
@@ -384,13 +424,13 @@ class GenewebExporter:
         for person in sorted(persons, key=lambda item: self._xref_sort_key(item.xref_id)):
             if not person or not person.xref_id:
                 continue
-            surname = self._format_token(person.name.surname or "?") or "?"
-            first = self._format_token(person.name.first_name or "0") or "0"
+            surname = self._format_token(person.surname or "?") or "?"
+            first = self._format_token(person.first_name or "0") or "0"
             suffix_tokens: List[str] = []
-            if person.name.suffix:
-                suffix_token = self._format_token(person.name.suffix)
-                if suffix_token:
-                    suffix_tokens.append(suffix_token)
+            for qualifier in person.qualifiers:
+                qualifier_token = self._format_token(qualifier)
+                if qualifier_token:
+                    suffix_tokens.append(qualifier_token)
 
             key = (surname, first)
             index = counts.get(key, 0)
@@ -404,13 +444,13 @@ class GenewebExporter:
         cached = self._display_name_tokens.get(person.xref_id)
         if cached:
             return cached
-        surname = self._format_token(person.name.surname or "?") or "?"
-        first = self._format_token(person.name.first_name or "0") or "0"
+        surname = self._format_token(person.surname or "?") or "?"
+        first = self._format_token(person.first_name or "0") or "0"
         suffix_tokens: List[str] = []
-        if person.name.suffix:
-            suffix_token = self._format_token(person.name.suffix)
-            if suffix_token:
-                suffix_tokens.append(suffix_token)
+        for qualifier in person.qualifiers:
+            qualifier_token = self._format_token(qualifier)
+            if qualifier_token:
+                suffix_tokens.append(qualifier_token)
         tokens = (surname, first, *suffix_tokens)
         if person.xref_id:
             self._display_name_tokens[person.xref_id] = tokens
@@ -432,8 +472,8 @@ class GenewebExporter:
 
         if person.occupation and include_details and not already_emitted:
             tokens.extend(["#occu", self._format_token(person.occupation)])
-        if person.source and not person.families_as_child:
-            source_token = self._format_source_token(person.source)
+        if person.psources and not person.families_as_child:
+            source_token = self._format_source_token(person.psources)
             if source_token:
                 tokens.extend(["#src", source_token])
 
@@ -465,53 +505,53 @@ class GenewebExporter:
         ]
         if child.occupation:
             parts.extend(["#occu", self._format_token(child.occupation)])
-        if child.source:
-            source_token = self._format_source_token(child.source)
+        if child.psources:
+            source_token = self._format_source_token(child.psources)
             if source_token and source_token not in shared_sources:
                 parts.extend(["#src", source_token])
         birth_summary = self._format_event_summary(child.birth)
         parts.extend(birth_summary)
         if "#bp" not in birth_summary and child.baptism and child.baptism.place:
-            parts.extend(["#pp", self._format_place_token(child.baptism.place)])
+            parts.extend(["#pp", self._format_place_token(_place_to_text(child.baptism.place))])
         parts.extend(self._format_event_summary(child.death))
         return " ".join(parts).rstrip()
 
-    def _format_family_event(self, kind: str, event: BaseEvent) -> str:
+    def _format_family_event(self, kind: str, event: Event) -> str:
         tokens: List[str] = [f"#{kind}"]
         date_text = _format_date(event.date)
+        place_token = self._format_place_token(_place_to_text(event.place)) if event.place else ""
+        source_token = self._format_source_token(event.source) if event.source else ""
         if date_text:
             tokens.append(date_text)
-        elif event.place or event.source:
+        elif place_token or source_token:
             tokens.append("")
-        if event.place:
-            tokens.append(f"#p {self._format_place_token(event.place)}")
-        if event.source:
-            source_token = self._format_source_token(event.source)
-            if source_token:
-                tokens.append(f"#s {source_token}")
+        if place_token:
+            tokens.append(f"#p {place_token}")
+        if source_token:
+            tokens.append(f"#s {source_token}")
         if len(tokens) == 1:
             tokens.append("")
         return " ".join(tokens)
 
-    def _format_person_event(self, kind: str, event: BaseEvent) -> Optional[str]:
+    def _format_person_event(self, kind: str, event: Event) -> Optional[str]:
         normalized_kind = self._normalize_person_event_kind(kind)
         tokens: List[str] = [f"#{normalized_kind}"]
         date_text = _format_date(event.date)
+        place_token = self._format_place_token(_place_to_text(event.place)) if event.place else ""
+        source_token = self._format_source_token(event.source) if event.source else ""
         if date_text:
             tokens.append(date_text)
-        elif event.place or event.source:
+        elif place_token or source_token:
             tokens.append("")
-        if event.place:
-            tokens.append(f"#p {self._format_place_token(event.place)}")
-        if event.source:
-            source_token = self._format_source_token(event.source)
-            if source_token:
-                tokens.append(f"#s {source_token}")
+        if place_token:
+            tokens.append(f"#p {place_token}")
+        if source_token:
+            tokens.append(f"#s {source_token}")
         if len(tokens) == 1:
             tokens.append("")
         return " ".join(tokens)
 
-    def _format_event_summary(self, event: Optional[BaseEvent], *, include_place: bool = True) -> List[str]:
+    def _format_event_summary(self, event: Optional[Event], *, include_place: bool = True) -> List[str]:
         if not event:
             return ["0"]
 
@@ -520,11 +560,13 @@ class GenewebExporter:
         tokens.append(date_text or "0")
 
         if include_place and event.place:
-            place_tag = "#bp" if (event.event_type or "").upper() in {"BIRT", "CHR", "BAPM"} else "#dp"
-            tokens.extend([place_tag, self._format_place_token(event.place)])
+            place_tag = "#bp" if _event_tag(event).upper() in {"BIRT", "CHR", "BAPM"} else "#dp"
+            place_token = self._format_place_token(_place_to_text(event.place))
+            if place_token:
+                tokens.extend([place_tag, place_token])
 
         if event.source:
-            source_tag = "#bs" if (event.event_type or "").upper() in {"BIRT", "CHR", "BAPM"} else "#ds"
+            source_tag = "#bs" if _event_tag(event).upper() in {"BIRT", "CHR", "BAPM"} else "#ds"
             source_token = self._format_source_token(event.source)
             if source_token:
                 tokens.extend([source_tag, source_token])
@@ -607,7 +649,7 @@ class GenewebExporter:
         }
         return mapping.get(normalized, normalized)
 
-    def _format_marriage_bridge(self, event: Optional[BaseEvent]) -> List[str]:
+    def _format_marriage_bridge(self, event: Optional[Event]) -> List[str]:
         summary = self._format_marriage_summary(event)
         if not summary:
             return ["+"]
@@ -616,7 +658,7 @@ class GenewebExporter:
             return ["+"] + [first] + rest
         return ["+" + first] + rest
 
-    def _format_marriage_summary(self, event: Optional[BaseEvent]) -> List[str]:
+    def _format_marriage_summary(self, event: Optional[Event]) -> List[str]:
         if not event:
             return []
 
@@ -625,18 +667,20 @@ class GenewebExporter:
         if date_text:
             tokens.append(date_text)
         if event.place:
-            tokens.append(f"#mp {self._format_place_token(event.place)}")
+            place_token = self._format_place_token(_place_to_text(event.place))
+            if place_token:
+                tokens.append(f"#mp {place_token}")
         if event.source:
             source_token = self._format_source_token(event.source)
             if source_token:
                 tokens.append(f"#ms {source_token}")
         return tokens
 
-    def _collect_family_events(self, family: GedcomFamily) -> List[Tuple[str, BaseEvent]]:
-        events: List[Tuple[str, BaseEvent]] = []
+    def _collect_family_events(self, family: GedcomFamily) -> List[Tuple[str, Event]]:
+        events: List[Tuple[str, Event]] = []
         seen: Set[Tuple[str, Tuple]] = set()
 
-        def add(kind: str, event: Optional[BaseEvent]) -> None:
+        def add(kind: str, event: Optional[Event]) -> None:
             if not event:
                 return
             signature = (kind, self._event_signature(event))
@@ -648,7 +692,7 @@ class GenewebExporter:
         add("marr", family.marriage)
         add("div", family.divorce)
         for extra in family.events:
-            add((extra.event_type or "event").lower(), extra)
+            add(_event_tag(extra).lower() or "event", extra)
         return events
 
     def _families_share_spouse(self, left: GedcomFamily, right: GedcomFamily) -> bool:
@@ -678,25 +722,26 @@ class GenewebExporter:
             return False
         return any(fid in remaining_family_ids for fid in person.families_as_child)
 
-    def _event_signature(self, event: BaseEvent) -> Tuple:
+    def _event_signature(self, event: Event) -> Tuple:
         date = event.date
         date_signature: Tuple = ()
         if date:
+            dmy = date.dmy
             date_signature = (
-                date.day,
-                date.month,
-                date.year,
-                date.precision,
-                date.original_text,
+                dmy.day if dmy else 0,
+                dmy.month if dmy else 0,
+                dmy.year if dmy else 0,
+                dmy.prec.value if (dmy and dmy.prec) else None,
+                date.text or "",
             )
         return (
-            (event.event_type or "").lower(),
+            _event_tag(event).lower(),
             date_signature,
-            self._format_place_token(event.place) if event.place else "",
+            self._format_place_token(_place_to_text(event.place)) if event.place else "",
             self._format_source_token(event.source) if event.source else "",
             (event.note or "").strip(),
-            (event.source_notes or "").strip(),
+            (getattr(event, "source_notes", "") or "").strip(),
         )
 
-    def _format_event_line(self, prefix: str, event: BaseEvent) -> str:  # pragma: no cover - backward compatibility
+    def _format_event_line(self, prefix: str, event: Event) -> str:  # pragma: no cover - backward compatibility
         return self._format_person_event(prefix.lstrip('#'), event) or ""

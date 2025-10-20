@@ -1,137 +1,111 @@
 from dataclasses import dataclass, field
-from typing import List, Optional, Dict, Any, Union
+from typing import Any, Dict, List, Optional
 
-# Import base models instead of redefining them
-from ..common.base_models import (
-    Sex, DeathType, RelationType, DatePrecision, 
-    BaseDate, BaseEvent, BaseName, BaseNote, BaseSource,
-    BasePersonProtocol, BaseFamilyProtocol, BaseDatabaseProtocol
-)
+from models.event import Event
+from models.family.family import Family
+from models.person.person import Person
+
+
+@dataclass
+class Note:
+    """Lightweight note representation used by the GEDCOM parser."""
+
+    person_id: Optional[str] = None
+    family_id: Optional[str] = None
+    content: str = ""
+    note_type: str = "general"
+    source: str = ""
+
+
+@dataclass
+class Source:
+    """Minimal source representation captured from GEDCOM SOUR records."""
+
+    source_id: str
+    title: str = ""
+    author: str = ""
+    publication: str = ""
+    repository: str = ""
+    call_number: str = ""
+    note: str = ""
+
 
 @dataclass
 class GedcomRecord:
-    """Represents a GEDCOM record with level, tag, value and sub-records"""
+    """Represents a GEDCOM record with level, tag, value and sub-records."""
+
     level: int
     tag: str
     value: str
     xref_id: Optional[str] = None
-    sub_records: List['GedcomRecord'] = field(default_factory=list)
+    sub_records: List["GedcomRecord"] = field(default_factory=list)
     line_number: int = 0
     used: bool = False
     raw_value: bytes = b""
 
-# Use BaseDate and BaseEvent from common models
-# GedcomDate is now just an alias to BaseDate for backwards compatibility
-GedcomDate = BaseDate
-GedcomEvent = BaseEvent
-
-@dataclass
-class GedcomPerson:
-    """Represents a GEDCOM individual that implements BasePersonProtocol"""
-    xref_id: str
-    name: BaseName = field(default_factory=BaseName)
-    sex: Sex = Sex.NEUTER
-    birth: Optional[BaseEvent] = None
-    death: Optional[BaseEvent] = None
-    baptism: Optional[BaseEvent] = None
-    burial: Optional[BaseEvent] = None
-    occupation: str = ""
-    note: str = ""
-    source: str = ""
-    events: List[BaseEvent] = field(default_factory=list)
-    families_as_spouse: List[str] = field(default_factory=list)
-    families_as_child: List[str] = field(default_factory=list)
-    aliases: List[str] = field(default_factory=list)
-    
-    # Special relationships (following OCaml implementation)
-    adoption_families: List[str] = field(default_factory=list)  # Families where adopted
-    adoption_details: Dict[str, str] = field(default_factory=dict)  # family -> parent role
-    godparents: List[str] = field(default_factory=list)  # Godparent person XREFs
-    witnesses: List[Dict[str, str]] = field(default_factory=list)  # Witness relationships
-    
-    # Backward compatibility properties
-    @property
-    def first_name(self) -> str:
-        return self.name.first_name
-    
-    @first_name.setter
-    def first_name(self, value: str):
-        self.name.first_name = value
-    
-    @property
-    def surname(self) -> str:
-        return self.name.surname
-    
-    @surname.setter
-    def surname(self, value: str):
-        self.name.surname = value
-    
-    # Implement BasePersonProtocol
-    def get_id(self) -> str:
-        return self.xref_id
-    
-    def get_name(self) -> BaseName:
-        return self.name
-    
-    def get_sex(self) -> Sex:
-        return self.sex
-    
-    def get_birth(self) -> Optional[BaseEvent]:
-        return self.birth
-    
-    def get_death(self) -> Optional[BaseEvent]:
-        return self.death
-    
-@dataclass
-class GedcomFamily:
-    """Represents a GEDCOM family that implements BaseFamilyProtocol"""
-    xref_id: str
-    husband_id: Optional[str] = None
-    wife_id: Optional[str] = None
-    children_ids: List[str] = field(default_factory=list)
-    marriage: Optional[BaseEvent] = None
-    divorce: Optional[BaseEvent] = None
-    relation_type: RelationType = RelationType.MARRIED
-    events: List[BaseEvent] = field(default_factory=list)
-    note: str = ""
-    source: str = ""
-    witnesses: List[Dict[str, str]] = field(default_factory=list)
-    adoption_notes: Dict[str, str] = field(default_factory=dict)
-    
-    # Implement BaseFamilyProtocol
-    def get_id(self) -> str:
-        return self.xref_id
-    
-    def get_husband_id(self) -> Optional[str]:
-        return self.husband_id
-    
-    def get_wife_id(self) -> Optional[str]:
-        return self.wife_id
-    
-    def get_children_ids(self) -> List[str]:
-        return self.children_ids
-    
-    def get_marriage(self) -> Optional[BaseEvent]:
-        return self.marriage
 
 @dataclass
 class GedcomDatabase:
-    """Complete GEDCOM database that implements BaseDatabaseProtocol"""
+    """Parsed GEDCOM data expressed with the new domain models."""
+
     header: Dict[str, Any] = field(default_factory=dict)
-    individuals: Dict[str, GedcomPerson] = field(default_factory=dict)
-    families: Dict[str, GedcomFamily] = field(default_factory=dict)
-    sources: Dict[str, BaseSource] = field(default_factory=dict)
-    notes: Dict[str, BaseNote] = field(default_factory=dict)
-    
-    # Implement BaseDatabaseProtocol
-    def get_person(self, person_id: str) -> Optional[BasePersonProtocol]:
-        return self.individuals.get(person_id)
-    
-    def get_family(self, family_id: str) -> Optional[BaseFamilyProtocol]:
-        return self.families.get(family_id)
-    
-    def get_all_persons(self) -> Dict[str, BasePersonProtocol]:
-        return self.individuals
-    
-    def get_all_families(self) -> Dict[str, BaseFamilyProtocol]:
-        return self.families
+    individuals: Dict[str, "GedcomPerson"] = field(default_factory=dict)
+    families: Dict[str, "GedcomFamily"] = field(default_factory=dict)
+    sources: Dict[str, Source] = field(default_factory=dict)
+    notes: Dict[str, Note] = field(default_factory=dict)
+
+
+@dataclass(init=False)
+class GedcomPerson(Person):
+    """Person wrapper that augments the core domain model for parser needs."""
+
+    xref_id: str = ""
+    families_as_spouse: List[str] = field(default_factory=list)
+    families_as_child: List[str] = field(default_factory=list)
+    adoption_details: Dict[str, str] = field(default_factory=dict)
+    adoption_families: List[str] = field(default_factory=list)
+    godparents: List[str] = field(default_factory=list)
+    witnesses: List[Dict[str, str]] = field(default_factory=list)
+    source_notes: str = ""
+
+    def __init__(self, *, xref_id: Optional[str] = None, first_name: str = "x", surname: str = "?", **kwargs):
+        super().__init__(first_name=first_name, surname=surname, **kwargs)
+        self.xref_id = xref_id or ""
+        self.families_as_spouse = []
+        self.families_as_child = []
+        self.adoption_details = {}
+        self.adoption_families = []
+        self.godparents = []
+        self.witnesses = []
+        self.source_notes = ""
+
+
+@dataclass(init=False)
+class GedcomFamily(Family):
+    """Family wrapper that keeps GEDCOM-centric metadata."""
+
+    xref_id: str = ""
+    husband_id: Optional[str] = None
+    wife_id: Optional[str] = None
+    children_ids: List[str] = field(default_factory=list)
+    adoption_notes: Dict[str, str] = field(default_factory=dict)
+    witnesses: List[Dict[str, str]] = field(default_factory=list)
+
+    def __init__(self, *, xref_id: Optional[str] = None, parent1: int = -1, parent2: int = 0, **kwargs):
+        kwargs.setdefault("children", kwargs.get("children", []))
+        super().__init__(parent1=parent1, parent2=parent2, **kwargs)
+        self.xref_id = xref_id or ""
+        self.husband_id = None
+        self.wife_id = None
+        self.children_ids = []
+        self.adoption_notes = {}
+        self.witnesses = []
+
+    def __post_init__(self):
+        # Override Family validation during initial GEDCOM import; detailed
+        # consistency checks happen after conversion to domain indices.
+        pass
+
+
+GedcomNote = Note
+GedcomSource = Source

@@ -3,7 +3,7 @@
 from typing import List, Optional
 from enum import Enum
 from dataclasses import dataclass, field
-from date import Date
+from .date import Date
 
 @dataclass
 class Place:
