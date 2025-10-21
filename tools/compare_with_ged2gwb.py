@@ -20,7 +20,7 @@ if str(SRC_ROOT) not in sys.path:
 from parsers.ged.parser import GedcomParser  # noqa: E402
 from parsers.gw.exporter import GenewebExporter  # noqa: E402
 from parsers.gw.canonical import canonicalize_gw, canonicalize_gedcom  # noqa: E402
-from parsers.gw.parser import GWParser  # noqa: E402
+from parsers.gw.loader import load_geneweb_file  # noqa: E402
 
 
 def _normalize(value: Any) -> Any:
@@ -61,8 +61,7 @@ def compare_databases(gedcom_path: Path, gw_path: Path, output_dir: Path, max_di
     parser = GedcomParser()
     py_db = parser.parse_file(str(gedcom_path))
 
-    gw_parser = GWParser()
-    ocaml_db = gw_parser.parse_file(str(gw_path))
+    ocaml_db = load_geneweb_file(str(gw_path))
 
     output_dir.mkdir(parents=True, exist_ok=True)
     py_json_path = output_dir / "python_canonical.json"

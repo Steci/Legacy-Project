@@ -5,8 +5,6 @@ from __future__ import annotations
 from dataclasses import dataclass, field, replace
 from typing import Dict, List, Optional
 
-from consang import compute_for_domain
-
 from models.date import Date, DMY
 from models.event import Event, Place, Witness
 from models.family.family import Family, RelationKind
@@ -32,19 +30,22 @@ class GedcomParsedDatabase:
     notes: Dict[str, Note] = field(default_factory=dict)
     person_index: Dict[str, int] = field(default_factory=dict)
     family_index: Dict[str, int] = field(default_factory=dict)
+    consanguinity_warnings: List[str] = field(default_factory=list)
+    consanguinity_errors: List[str] = field(default_factory=list)
 
 
 def convert_legacy_database(
     database: GedcomDatabase,
     *,
-    compute_consanguinity: bool = True,
+    compute_consanguinity: bool = False,
 ) -> GedcomParsedDatabase:
     """Convert the GEDCOM parser structures into the domain data-model.
 
     Args:
         database: Parsed GEDCOM structures.
         compute_consanguinity: Whether to compute and attach consanguinity
-            coefficients to the resulting domain persons.
+            coefficients to the resulting domain persons. Disabled by default
+            to keep the conversion phase side-effect free.
     """
 
     person_index = _build_index_map(database.individuals.keys())
@@ -53,14 +54,7 @@ def convert_legacy_database(
     families = _convert_families(database.families, person_index, family_index)
     individuals = _convert_persons(database.individuals, families, person_index, family_index)
 
-    if compute_consanguinity and individuals and families:
-        compute_for_domain(
-            individuals.values(),
-            families.values(),
-            from_scratch=True,
-        )
-
-    return GedcomParsedDatabase(
+    parsed = GedcomParsedDatabase(
         header=dict(database.header),
         individuals=individuals,
         families=families,
@@ -69,6 +63,13 @@ def convert_legacy_database(
         person_index=person_index,
         family_index=family_index,
     )
+
+    if compute_consanguinity:
+        from .refresh import refresh_consanguinity  # import locally to avoid cycle
+
+        refresh_consanguinity(parsed)
+
+    return parsed
 
 
 # ---------------------------------------------------------------------------

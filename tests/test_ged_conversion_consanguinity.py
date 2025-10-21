@@ -9,6 +9,7 @@ from models.family.family import RelationKind  # type: ignore[import-not-found]
 from models.person.params import Sex as PersonSex  # type: ignore[import-not-found]
 from parsers.ged.conversion import convert_legacy_database  # type: ignore[import-not-found]
 from parsers.ged.models import GedcomDatabase, GedcomFamily, GedcomPerson  # type: ignore[import-not-found]
+from parsers.ged.refresh import refresh_consanguinity  # type: ignore[import-not-found]
 
 
 def _build_inbred_database() -> GedcomDatabase:
@@ -54,19 +55,33 @@ def _build_inbred_database() -> GedcomDatabase:
     return db
 
 
-def test_conversion_computes_consanguinity_by_default():
+def test_conversion_is_pure_by_default():
     database = _build_inbred_database()
 
     parsed = convert_legacy_database(database)
 
     child = parsed.individuals["I5"]
-    assert pytest.approx(0.25, rel=1e-9, abs=1e-9) == child.consanguinity
+    assert child.consanguinity == pytest.approx(0.0)
+    assert parsed.consanguinity_warnings == []
+    assert parsed.consanguinity_errors == []
 
 
-def test_conversion_can_skip_consanguinity_when_disabled():
+def test_refresh_consanguinity_computes_coefficients():
     database = _build_inbred_database()
 
-    parsed = convert_legacy_database(database, compute_consanguinity=False)
+    parsed = convert_legacy_database(database)
+    refresh_consanguinity(parsed)
 
     child = parsed.individuals["I5"]
-    assert child.consanguinity == pytest.approx(0.0)
+    assert pytest.approx(0.25, rel=1e-9, abs=1e-9) == child.consanguinity
+    assert parsed.consanguinity_warnings == []
+
+
+def test_conversion_can_opt_in_to_consanguinity():
+    database = _build_inbred_database()
+
+    parsed = convert_legacy_database(database, compute_consanguinity=True)
+
+    child = parsed.individuals["I5"]
+    assert pytest.approx(0.25, rel=1e-9, abs=1e-9) == child.consanguinity
+    assert parsed.consanguinity_warnings == []
