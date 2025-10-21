@@ -1,5 +1,6 @@
 import os
 import sys
+from unittest.mock import mock_open
 
 import pytest
 
@@ -104,7 +105,7 @@ def test_parse_relations_block(parser):
     assert relation.person_key == "Corno Yann", "Relation person key mismatch"
     assert "- godp: Martin Paul + Smith Jane" in [line.strip() for line in relation.lines], "Relation line mismatch"
 
-def test_parse_file_with_realistic_data(parser, mocker):
+def test_parse_file_with_realistic_data(parser, monkeypatch):
     """
     Validate that a file with realistic data is parsed correctly.
     Business Rule: The parser should handle a complete file and produce a valid database.
@@ -124,7 +125,7 @@ def test_parse_file_with_realistic_data(parser, mocker):
     - godp: Martin Paul + Smith Jane
     end
     """
-    mocker.patch("builtins.open", mocker.mock_open(read_data=mock_data))
+    monkeypatch.setattr("builtins.open", mock_open(read_data=mock_data))
     db = parser.parse_file("mock_file.gw")
 
     assert isinstance(db, GWDatabase), "Expected the result to be a GWDatabase object"

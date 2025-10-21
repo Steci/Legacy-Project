@@ -5,6 +5,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field, replace
 from typing import Dict, List, Optional
 
+from consang import compute_for_domain
+
 from models.date import Date, DMY
 from models.event import Event, Place, Witness
 from models.family.family import Family, RelationKind
@@ -32,14 +34,31 @@ class GedcomParsedDatabase:
     family_index: Dict[str, int] = field(default_factory=dict)
 
 
-def convert_legacy_database(database: GedcomDatabase) -> GedcomParsedDatabase:
-    """Convert the GEDCOM parser structures into the domain data-model."""
+def convert_legacy_database(
+    database: GedcomDatabase,
+    *,
+    compute_consanguinity: bool = True,
+) -> GedcomParsedDatabase:
+    """Convert the GEDCOM parser structures into the domain data-model.
+
+    Args:
+        database: Parsed GEDCOM structures.
+        compute_consanguinity: Whether to compute and attach consanguinity
+            coefficients to the resulting domain persons.
+    """
 
     person_index = _build_index_map(database.individuals.keys())
     family_index = _build_index_map(database.families.keys())
 
     families = _convert_families(database.families, person_index, family_index)
     individuals = _convert_persons(database.individuals, families, person_index, family_index)
+
+    if compute_consanguinity and individuals and families:
+        compute_for_domain(
+            individuals.values(),
+            families.values(),
+            from_scratch=True,
+        )
 
     return GedcomParsedDatabase(
         header=dict(database.header),

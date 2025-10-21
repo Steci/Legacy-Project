@@ -42,7 +42,14 @@ def make_domain_models(fixture_name: str):
     return persons, families, expected
 
 
-@pytest.mark.parametrize("fixture_name", ["simple_family", "first_cousin"])
+@pytest.mark.parametrize(
+    "fixture_name",
+    [
+        "simple_family",
+        "first_cousin",
+        "full/extended",
+    ],
+)
 def test_compute_for_domain_matches_golden(fixture_name: str):
     persons, families, expected = make_domain_models(fixture_name)
 

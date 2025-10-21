@@ -38,7 +38,14 @@ def load_fixture(name: str):
     return persons, families, expected
 
 
-@pytest.mark.parametrize("fixture_name", ["simple_family", "first_cousin"])
+@pytest.mark.parametrize(
+    "fixture_name",
+    [
+        "simple_family",
+        "first_cousin",
+        "full/extended",
+    ],
+)
 def test_compute_consanguinity_matches_golden_master(fixture_name: str):
     persons, families, expected = load_fixture(fixture_name)
 
