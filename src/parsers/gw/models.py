@@ -1,3 +1,13 @@
+"""Parser-scoped data wrappers for GeneWeb.
+
+These classes intentionally live alongside the parser so we can extend the
+shared domain models with GeneWeb-specific parsing metadata (raw tokens,
+textual witnesses, numbering hints, etc.) without polluting the canonical
+definitions in ``src/models``.  Downstream refresh/convert steps can consume
+the richer context, while callers who only care about the domain layer keep
+importing from ``src/models``.
+"""
+
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -89,3 +99,5 @@ class GWDatabase:
     persons: Dict[str, Person] = field(default_factory=dict)
     notes: List[NoteBlock] = field(default_factory=list)
     relations: List[RelationBlock] = field(default_factory=list)
+    consanguinity_warnings: List[str] = field(default_factory=list)
+    consanguinity_errors: List[str] = field(default_factory=list)

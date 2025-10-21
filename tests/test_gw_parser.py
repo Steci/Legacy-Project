@@ -6,6 +6,7 @@ from unittest.mock import mock_open, patch
 
 import pytest
 from parsers.gw.parser import GWParser
+from parsers.gw.refresh import refresh_consanguinity
 from parsers.gw.models import GWDatabase, Family, Person, NoteBlock, RelationBlock
 from parsers.gw.utils import canonical_key_from_tokens
 
@@ -99,3 +100,42 @@ def test_maybe_add_person(parser):
     parser._maybe_add_person(raw)
     assert len(parser.db.persons) == 1
     assert "Corno Yann" in parser.db.persons
+
+
+def test_parse_text_computes_consanguinity(parser):
+    text = """
+    Smith John 1900
+    Doe Jane 1905
+    fam Smith John + Doe Jane
+    beg
+    - h Smith Junior
+    end
+    """
+    db = parser.parse_text(text)
+    refresh_consanguinity(db)
+
+    junior = db.persons.get("Smith Junior")
+    assert junior is not None
+    assert junior.consanguinity == pytest.approx(0.0)
+    assert db.consanguinity_warnings == []
+
+
+def test_parse_text_cycle_records_warning(parser):
+    text = """
+    Ancestor Adam 1800
+    Ancestor Eve 1805
+    fam Ancestor Adam + Ancestor Eve
+    beg
+    - h Ancestor Adam
+    end
+    """
+    db = parser.parse_text(text)
+    refresh_consanguinity(db)
+
+    assert db.consanguinity_warnings
+    warning_text = " ".join(db.consanguinity_warnings)
+    assert "Ancestor Adam" in warning_text
+
+    adam = db.persons.get("Ancestor Adam")
+    assert adam is not None
+    assert adam.consanguinity_issue == "ancestral_loop"

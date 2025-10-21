@@ -9,11 +9,13 @@ Usage:
 
 from .models import Person, Family, NoteBlock, RelationBlock, GWDatabase
 from .parser import GWParser
+from .refresh import refresh_consanguinity
 from .summary import db_summary
 
 __all__ = [
     "GWParser",
     "db_summary",
+    "refresh_consanguinity",
     "Person",
     "Family",
     "NoteBlock",

@@ -1,3 +1,12 @@
+"""Parser-local wrappers for GEDCOM imports.
+
+We subclass the shared domain models here to attach GEDCOM-only metadata
+such as xref identifiers, adoption notes, or raw record trees.  Keeping these
+variants in the parser package preserves the clean API of ``src/models`` while
+still letting conversion code work with the extra context captured during
+parsing.
+"""
+
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
