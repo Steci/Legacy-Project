@@ -1,0 +1,14 @@
+{
+  "source": "first_cousin_large.gw",
+  "expected_consanguinity": {
+    "Ancestor John": 0.0,
+    "Ancestor Jane": 0.0,
+    "Parent Alex": 0.0,
+    "Parent Beth": 0.0,
+    "Partner Alice": 0.0,
+    "Partner Brian": 0.0,
+    "Cousin Adam": 0.0,
+    "Cousin Bella": 0.0,
+    "Child Charles": 0.0625
+  }
+}

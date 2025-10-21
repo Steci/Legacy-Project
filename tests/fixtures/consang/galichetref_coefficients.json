@@ -1,0 +1,33 @@
+{
+  "source": "galichet_ref.gw",
+  "expected_consanguinity": {
+    "Boizot Jean": 0.0,
+    "Boizot Jeanne": 0.0,
+    "Dupond Marie": 0.0,
+    "Fache Jeanne": 0.0,
+    "Galichet Jean-Paul": 0.0,
+    "Galichet Jean_Charles": 0.0,
+    "Galichet Jean_Pierre": 0.0,
+    "Galichet Laure": 0.0,
+    "Galichet Paul": 0.0,
+    "Galichet Pierre": 0.0,
+    "Galichet Thérèse_Eugénie": 0.0,
+    "Galichet lolo": 0.0,
+    "Geruzet Anthoine": 0.0,
+    "Geruzet Anthoine.1": 0.0,
+    "Geruzet Jacques": 0.0,
+    "Geruzet Laurence": 0.0,
+    "Geruzet Laurent": 0.0,
+    "Geruzet Marie-Jeanne": 0.0,
+    "Geruzet _\"Jean-Baptiste\"_Laurent": 0.0,
+    "Jayot Claude": 0.0,
+    "Jayot Jean": 0.0,
+    "Laramee Charlotte": 0.0,
+    "Loche Marie_Elisabeth": 0.0,
+    "Marty Florence": 0.0,
+    "Sutaine Louis.1": 0.0,
+    "Sutaine Perrette": 0.0,
+    "femme1 prenom1": 0.0,
+    "femme2 prenom2": 0.0
+  }
+}

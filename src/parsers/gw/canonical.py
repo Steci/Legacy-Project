@@ -51,6 +51,8 @@ class CanonicalPerson:
     key: str
     sex: Optional[str]
     events: Tuple[CanonicalEvent, ...]
+    consanguinity: float = 0.0
+    consanguinity_issue: Optional[str] = None
 
 
 @dataclass(frozen=True)
@@ -71,6 +73,8 @@ class CanonicalDatabase:
     persons: Tuple[CanonicalPerson, ...]
     notes: Tuple[CanonicalNote, ...]
     relations: Tuple[CanonicalRelation, ...]
+    consanguinity_warnings: Tuple[str, ...] = ()
+    consanguinity_errors: Tuple[str, ...] = ()
 
 
 def canonicalize_gw(database: GWDatabase) -> CanonicalDatabase:
@@ -112,6 +116,8 @@ def canonicalize_gw(database: GWDatabase) -> CanonicalDatabase:
                 key=key,
                 sex=sex_map.get(key),
                 events=events,
+                consanguinity=float(getattr(person, "consanguinity", 0.0) or 0.0),
+                consanguinity_issue=getattr(person, "consanguinity_issue", None),
             )
         )
 
@@ -147,6 +153,8 @@ def canonicalize_gw(database: GWDatabase) -> CanonicalDatabase:
         persons=persons_sorted,
         notes=notes,
         relations=relations,
+        consanguinity_warnings=tuple(getattr(database, "consanguinity_warnings", []) or ()),
+        consanguinity_errors=tuple(getattr(database, "consanguinity_errors", []) or ()),
     )
 
 
