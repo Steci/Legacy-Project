@@ -42,6 +42,7 @@ class Person:
     key_index: Optional[int] = None  # Unique identifier for the person
     consanguinity: float = 0.0
     consanguinity_issue: Optional[str] = None
+    consanguinity_known: bool = False
 
     def __post_init__(self):
         """Post-initialization validation and setup"""

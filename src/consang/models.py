@@ -13,6 +13,7 @@ class PersonNode:
     person_id: int
     parent_family_id: Optional[int]
     consanguinity: float = 0.0
+    needs_update: bool = True
 
 
 @dataclass

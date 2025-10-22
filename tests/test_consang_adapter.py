@@ -59,3 +59,20 @@ def test_compute_for_domain_matches_golden(fixture_name: str):
     for pid, value in expected.items():
         assert pytest.approx(value, rel=1e-6, abs=1e-6) == result[pid]
         assert pytest.approx(value, rel=1e-6, abs=1e-6) == getattr(persons[pid], "consanguinity", None)
+
+
+def test_incremental_compute_respects_known_flags():
+    persons, families, _expected = make_domain_models("simple_family")
+
+    compute_for_domain(persons.values(), families.values(), from_scratch=True)
+
+    child = persons[3]
+    child.consanguinity = 0.5
+    child.consanguinity_known = False
+
+    compute_for_domain(persons.values(), families.values(), from_scratch=False)
+
+    assert pytest.approx(0.0, rel=1e-9, abs=1e-9) == child.consanguinity
+    assert child.consanguinity_known is True
+    assert persons[1].consanguinity_known is True
+    assert persons[2].consanguinity_known is True

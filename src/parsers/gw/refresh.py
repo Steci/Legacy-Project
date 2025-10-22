@@ -11,7 +11,7 @@ from models.family.family import Family as DomainFamily
 from .models import GWDatabase, Person
 
 
-def refresh_consanguinity(database: GWDatabase) -> None:
+def refresh_consanguinity(database: GWDatabase, *, from_scratch: bool = True) -> None:
     """Compute consanguinity coefficients for a parsed GeneWeb database.
 
     This function mirrors the post-import refresh step performed by the
@@ -21,7 +21,7 @@ def refresh_consanguinity(database: GWDatabase) -> None:
     database.consanguinity_warnings = []
     database.consanguinity_errors = []
 
-    prepared = _prepare_consanguinity_inputs(database)
+    prepared = _prepare_consanguinity_inputs(database, from_scratch=from_scratch)
     if prepared is None:
         return
 
@@ -30,7 +30,7 @@ def refresh_consanguinity(database: GWDatabase) -> None:
         return
 
     try:
-        compute_for_domain(persons, families, from_scratch=True)
+        compute_for_domain(persons, families, from_scratch=from_scratch)
     except AncestralLoopError as exc:
         _handle_consanguinity_loop(database, exc, index_to_key)
     except ConsanguinityComputationError as exc:
@@ -39,6 +39,8 @@ def refresh_consanguinity(database: GWDatabase) -> None:
 
 def _prepare_consanguinity_inputs(
     database: GWDatabase,
+    *,
+    from_scratch: bool,
 ) -> Optional[Tuple[List[Person], List[DomainFamily], Dict[int, str]]]:
     if not database.persons or not database.families:
         return None
@@ -52,8 +54,12 @@ def _prepare_consanguinity_inputs(
 
     for idx, (key, person) in enumerate(ordered_persons, start=1):
         person.key_index = idx
-        person.consanguinity = 0.0
         person.consanguinity_issue = None
+        if from_scratch:
+            person.consanguinity = 0.0
+            person.consanguinity_known = False
+        else:
+            person.consanguinity_known = bool(getattr(person, "consanguinity_known", False))
         persons_for_compute.append(person)
         key_to_index[key] = idx
         key_lower_to_index[key.lower()] = idx

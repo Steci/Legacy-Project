@@ -19,7 +19,10 @@ def _normalize_parent(identifier: int | None) -> int | None:
 
 
 def build_nodes_from_domain(
-    persons: Iterable[Person], families: Iterable[Family]
+    persons: Iterable[Person],
+    families: Iterable[Family],
+    *,
+    from_scratch: bool = False,
 ) -> Tuple[Dict[int, PersonNode], Dict[int, FamilyNode]]:
     """Convert domain models into lightweight nodes used by the engine."""
 
@@ -53,10 +56,13 @@ def build_nodes_from_domain(
     person_nodes: Dict[int, PersonNode] = {}
     for pid, person in person_lookup.items():
         initial_consang = float(getattr(person, "consanguinity", 0.0) or 0.0)
+        known = bool(getattr(person, "consanguinity_known", False))
+        needs_update = from_scratch or not known
         person_nodes[pid] = PersonNode(
             person_id=pid,
             parent_family_id=parent_family_map.get(pid),
             consanguinity=initial_consang,
+            needs_update=needs_update,
         )
 
     family_nodes: Dict[int, FamilyNode] = {}
@@ -85,7 +91,9 @@ def compute_for_domain(
     person_list = list(persons)
     family_list = list(families)
 
-    person_nodes, family_nodes = build_nodes_from_domain(person_list, family_list)
+    person_nodes, family_nodes = build_nodes_from_domain(
+        person_list, family_list, from_scratch=from_scratch
+    )
     results = compute_consanguinity(
         person_nodes, family_nodes, from_scratch=from_scratch
     )
@@ -95,5 +103,6 @@ def compute_for_domain(
         person = person_lookup.get(pid)
         if person is not None:
             setattr(person, "consanguinity", value)
+            setattr(person, "consanguinity_known", True)
 
     return results

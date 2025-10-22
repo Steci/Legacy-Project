@@ -18,6 +18,7 @@ def load_geneweb_text(
     text: str,
     *,
     compute_consanguinity: bool = True,
+    from_scratch: bool = True,
     debug: bool = False,
     parser: Optional[GWParser] = None,
 ) -> GWDatabase:
@@ -27,6 +28,8 @@ def load_geneweb_text(
         text: GeneWeb textual content.
         compute_consanguinity: Whether to trigger the refresh pass that computes
             consanguinity coefficients and collects loop diagnostics.
+        from_scratch: Mirror GeneWeb's `-scratch` flag; when ``False`` the
+            existing coefficients are reused whenever possible.
         debug: Passed to :class:`GWParser` if no explicit *parser* is provided.
         parser: Reuse an existing :class:`GWParser` instance when provided.
     """
@@ -34,7 +37,7 @@ def load_geneweb_text(
     gw_parser = parser or GWParser(debug=debug)
     database = gw_parser.parse_text(text)
     if compute_consanguinity:
-        refresh_consanguinity(database)
+        refresh_consanguinity(database, from_scratch=from_scratch)
     return database
 
 
@@ -42,6 +45,7 @@ def load_geneweb_file(
     path: str,
     *,
     compute_consanguinity: bool = True,
+    from_scratch: bool = True,
     debug: bool = False,
     parser: Optional[GWParser] = None,
 ) -> GWDatabase:
@@ -55,5 +59,5 @@ def load_geneweb_file(
     gw_parser = parser or GWParser(debug=debug)
     database = gw_parser.parse_file(path)
     if compute_consanguinity:
-        refresh_consanguinity(database)
+        refresh_consanguinity(database, from_scratch=from_scratch)
     return database
