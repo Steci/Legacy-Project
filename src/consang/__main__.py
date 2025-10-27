@@ -5,16 +5,87 @@ from __future__ import annotations
 import argparse
 import sys
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, Tuple
+from typing import Callable, Dict, Iterable, List, Optional, Tuple
 
+from parsers.gw.exporter import GenewebExporter
 from parsers.gw.loader import load_geneweb_file
 from parsers.gw.refresh import refresh_consanguinity
-from parsers.gw.exporter import GenewebExporter
+
+from consang.cousin_degree import (
+    build_cousin_listings,
+    build_default_spouse_lookup,
+    describe_cousin_degree,
+    format_cousin_listings,
+    infer_cousin_degree,
+    PersonTemporalData,
+)
 from consang.relationship import summarize_relationship
 
 
 def _format_branch_path(path: Tuple[str, ...]) -> str:
     return " -> ".join(path)
+
+
+def _event_year_info(event) -> Tuple[Optional[int], Optional[object]]:
+    date = getattr(event, "date", None)
+    if not date:
+        return (None, None)
+    dmy = getattr(date, "dmy", None)
+    if not dmy:
+        return (None, None)
+    year = getattr(dmy, "year", None)
+    precision = getattr(dmy, "prec", None)
+    if isinstance(year, int) and year != 0:
+        return (year, precision)
+    return (None, precision)
+
+
+def _make_temporal_lookup(
+    database,
+) -> Optional[Callable[[str], Optional[PersonTemporalData]]]:
+    persons: Dict[str, object] = getattr(database, "persons", {}) or {}
+    if not persons:
+        return None
+
+    cache: Dict[str, Optional[PersonTemporalData]] = {}
+
+    def lookup(person_key: str) -> Optional[PersonTemporalData]:
+        if person_key in cache:
+            return cache[person_key]
+        person = persons.get(person_key)
+        birth_event = getattr(person, "birth", None)
+        death_event = getattr(person, "death", None)
+        birth_year, birth_precision = _event_year_info(birth_event)
+        death_year, death_precision = _event_year_info(death_event)
+        alive_attr = getattr(person, "is_alive", None)
+        is_alive = None
+        if isinstance(alive_attr, bool):
+            is_alive = alive_attr
+        elif callable(alive_attr):
+            try:
+                alive_value = alive_attr()
+            except TypeError:
+                alive_value = None
+            if isinstance(alive_value, bool):
+                is_alive = alive_value
+        if birth_year is None and death_year is None:
+            cache[person_key] = None
+            return None
+        data = PersonTemporalData(
+            birth_year=birth_year,
+            birth_precision=birth_precision,
+            death_year=death_year,
+            death_precision=death_precision,
+            is_alive=is_alive,
+        )
+        cache[person_key] = data
+        return data
+
+    # Return a callable while keeping cache closure
+    def wrapper(person_key: str) -> Optional[PersonTemporalData]:
+        return lookup(person_key)
+
+    return wrapper
 
 
 def _emit_relationship_report(
@@ -55,6 +126,9 @@ def _emit_relationship_report(
         print(f"Relationship computation failed: {exc}", file=sys.stderr)
         return 1
 
+    cousin_degree = infer_cousin_degree(summary)
+    cousin_description = describe_cousin_degree(cousin_degree)
+
     if quiet_level >= 2:
         return 0
 
@@ -62,6 +136,7 @@ def _emit_relationship_report(
         f"Relationship coefficient between {key_a} and {key_b}: "
         f"{summary.coefficient:.6f}"
     )
+    print(f"  Relationship: {cousin_description}")
     if not summary.ancestors:
         print("  No common ancestors identified.")
         return 0
@@ -80,6 +155,19 @@ def _emit_relationship_report(
                 f"    Path to {key_b}: length={branch.length}, multiplicity={mult}, "
                 f"path={_format_branch_path(branch.path)}"
             )
+
+    temporal_lookup = _make_temporal_lookup(database)
+    spouse_lookup = build_default_spouse_lookup(database)
+
+    listings = build_cousin_listings(
+        summary,
+        temporal_lookup=temporal_lookup,
+        spouse_lookup=spouse_lookup,
+    )
+    if listings:
+        print("  Cousin listings:")
+        for line in format_cousin_listings(listings):
+            print(f"    {line}")
 
     return 0
 

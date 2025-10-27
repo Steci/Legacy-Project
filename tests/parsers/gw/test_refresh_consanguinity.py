@@ -5,6 +5,7 @@ from textwrap import dedent
 
 import pytest
 
+from consang.cousin_degree import describe_cousin_degree, infer_cousin_degree
 from parsers.gw.parser import GWParser
 from parsers.gw.refresh import RelationshipSummaryCache, refresh_consanguinity
 
@@ -81,6 +82,20 @@ def test_refresh_builds_relationship_summaries(parsed_database):
     assert summary.person_a == "Smith John"
     assert summary.person_b == "Doe Jane"
     assert summary.coefficient == pytest.approx(0.0)
+
+
+def test_refresh_summaries_support_cousin_degree(parsed_database):
+    refresh_consanguinity(parsed_database)
+
+    summaries = parsed_database.relationship_summaries
+    key = ("Smith John", "Doe Jane")
+    assert key in summaries
+
+    cousin_degree = infer_cousin_degree(summaries[key])
+    description = describe_cousin_degree(cousin_degree)
+
+    assert cousin_degree.kind is not None
+    assert isinstance(description, str)
 
 
 def test_refresh_updates_relation_blocks(parsed_database):
