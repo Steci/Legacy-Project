@@ -11,6 +11,7 @@ sys.path.insert(0, os.path.abspath("src"))
 from consang import compute_consanguinity
 from consang.models import FamilyNode, PersonNode
 from parsers.gw.loader import load_geneweb_file
+from consang.relationship import RelationshipSummary
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 FIXTURE_DIR = Path(__file__).parent / "fixtures" / "consang"
@@ -68,29 +69,73 @@ def test_compute_consanguinity_matches_golden_master(fixture_name: str):
         )
 
 
-    @pytest.mark.parametrize(
-        ("gw_fixture", "golden_fixture"),
-        [
-            ("first_cousin_large.gw", "first_cousin_large_coefficients.json"),
-            (PROJECT_ROOT / "examples_files" / "galichet_ref.gw", "galichetref_coefficients.json"),
-        ],
-    )
-    def test_geneweb_text_refresh_matches_golden(gw_fixture, golden_fixture):
-        if isinstance(gw_fixture, str):
-            gw_path = FIXTURE_DIR / gw_fixture
-        else:
-            gw_path = Path(gw_fixture)
+def _serialise_paths(summary_paths):
+    serialised = {}
+    for ancestor in summary_paths:
+        serialised[ancestor] = [
+            {
+                "length": branch.length,
+                "multiplicity": branch.multiplicity,
+                "path": list(branch.path),
+            }
+            for branch in summary_paths[ancestor]
+        ]
+    return serialised
 
-        golden_path = FIXTURE_DIR / golden_fixture
-        expected_payload = json.loads(golden_path.read_text(encoding="utf-8"))
-        expected = expected_payload["expected_consanguinity"]
 
-        database = load_geneweb_file(str(gw_path))
+def _serialise_summary(summary: RelationshipSummary) -> dict:
+    return {
+        "coefficient": summary.coefficient,
+        "ancestors": list(summary.ancestors),
+        "paths_to_a": _serialise_paths(summary.paths_to_a),
+        "paths_to_b": _serialise_paths(summary.paths_to_b),
+    }
 
-        observed = {
-            person_key: database.persons[person_key].consanguinity
-            for person_key in expected.keys()
-        }
 
-        for key, value in expected.items():
-            assert math.isclose(observed[key], value, rel_tol=1e-6, abs_tol=1e-6)
+@pytest.mark.parametrize(
+    ("gw_fixture", "golden_fixture"),
+    [
+        ("first_cousin_large.gw", "first_cousin_large_coefficients.json"),
+        (PROJECT_ROOT / "examples_files" / "galichet_ref.gw", "galichetref_coefficients.json"),
+    ],
+)
+def test_geneweb_text_refresh_matches_golden(gw_fixture, golden_fixture):
+    if isinstance(gw_fixture, str):
+        gw_path = FIXTURE_DIR / gw_fixture
+    else:
+        gw_path = Path(gw_fixture)
+
+    golden_path = FIXTURE_DIR / golden_fixture
+    expected_payload = json.loads(golden_path.read_text(encoding="utf-8"))
+
+    expected_cons = expected_payload["expected_consanguinity"]
+    expected_relationships = expected_payload.get("expected_relationships", {})
+
+    database = load_geneweb_file(str(gw_path))
+
+    observed = {
+        person_key: database.persons[person_key].consanguinity
+        for person_key in expected_cons.keys()
+    }
+
+    for key, value in expected_cons.items():
+        assert math.isclose(observed[key], value, rel_tol=1e-6, abs_tol=1e-6)
+
+    serialised_actual = {
+        f"{person_a}|{person_b}": _serialise_summary(summary)
+        for (person_a, person_b), summary in database.relationship_summaries.items()
+    }
+
+    assert set(serialised_actual.keys()) == set(expected_relationships.keys())
+
+    for pair_key, expected_summary in expected_relationships.items():
+        actual_summary = serialised_actual[pair_key]
+        assert math.isclose(
+            actual_summary["coefficient"],
+            expected_summary["coefficient"],
+            rel_tol=1e-6,
+            abs_tol=1e-6,
+        )
+        assert actual_summary["ancestors"] == expected_summary["ancestors"]
+        assert actual_summary["paths_to_a"] == expected_summary["paths_to_a"]
+        assert actual_summary["paths_to_b"] == expected_summary["paths_to_b"]

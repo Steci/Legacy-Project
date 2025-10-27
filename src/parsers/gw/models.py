@@ -9,10 +9,13 @@ importing from ``src/models``.
 """
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, TYPE_CHECKING, Mapping
 
 from models.family.family import Family as DomainFamily
 from models.person.person import Person as DomainPerson
+
+if TYPE_CHECKING:
+    from consang.relationship import RelationshipInfo, RelationshipSummary
 
 
 @dataclass(init=False)
@@ -101,3 +104,7 @@ class GWDatabase:
     relations: List[RelationBlock] = field(default_factory=list)
     consanguinity_warnings: List[str] = field(default_factory=list)
     consanguinity_errors: List[str] = field(default_factory=list)
+    relationship_info: Optional["RelationshipInfo"] = None
+    relationship_key_to_index: Dict[str, int] = field(default_factory=dict)
+    relationship_index_to_key: Dict[int, str] = field(default_factory=dict)
+    relationship_summaries: Mapping[Tuple[str, str], "RelationshipSummary"] = field(default_factory=dict)

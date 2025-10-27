@@ -50,6 +50,27 @@ class RelationshipResult:
 	info: "RelationshipInfo"
 
 
+@dataclass(frozen=True)
+class BranchPath:
+	"""Human-friendly path description used for downstream reporting."""
+
+	length: int
+	multiplicity: int
+	path: Tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class RelationshipSummary:
+	"""Serializable summary of a relationship result."""
+
+	person_a: str
+	person_b: str
+	coefficient: float
+	ancestors: Tuple[str, ...]
+	paths_to_a: Dict[str, Tuple[BranchPath, ...]]
+	paths_to_b: Dict[str, Tuple[BranchPath, ...]]
+
+
 class RelationshipInfo:
 	"""State container that mirrors GeneWeb's `Consang.relationship_info`."""
 
@@ -238,6 +259,68 @@ def build_relationship_info(
 	"""Factory mirroring GeneWeb's `make_relationship_info`."""
 
 	order = topological_order(persons, families)
-	rank = {pid: idx for idx, pid in enumerate(order)}
+	reversed_order = list(reversed(order))
+	rank = {pid: idx for idx, pid in enumerate(reversed_order)}
 	return RelationshipInfo(persons, families, rank)
+
+
+def summarize_relationship(
+	info: RelationshipInfo,
+	person_a_id: int,
+	person_b_id: int,
+	index_to_key: Dict[int, str],
+) -> RelationshipSummary:
+	"""Return a serialisable summary for the two individuals."""
+
+	person_a_key = index_to_key.get(person_a_id, str(person_a_id))
+	person_b_key = index_to_key.get(person_b_id, str(person_b_id))
+
+	result = info.relationship_and_links(
+		person_a_id, person_b_id, include_branches=True
+	)
+
+	ancestors: Tuple[str, ...] = tuple(
+		index_to_key.get(ancestor_id, str(ancestor_id))
+		for ancestor_id in result.top_ancestors
+	)
+
+	paths_to_a: Dict[str, Tuple[BranchPath, ...]] = {}
+	paths_to_b: Dict[str, Tuple[BranchPath, ...]] = {}
+
+	for ancestor_id in result.top_ancestors:
+		ancestor_key = index_to_key.get(ancestor_id, str(ancestor_id))
+		state = result.info.states[ancestor_id]
+
+		paths_to_a[ancestor_key] = tuple(
+			BranchPath(
+				length=branch.length,
+				multiplicity=branch.count,
+				path=tuple(
+					index_to_key.get(pid, str(pid))
+					for pid in [ancestor_id, *branch.nodes, person_a_id]
+				),
+			)
+			for branch in state.lens1
+		)
+
+		paths_to_b[ancestor_key] = tuple(
+			BranchPath(
+				length=branch.length,
+				multiplicity=branch.count,
+				path=tuple(
+					index_to_key.get(pid, str(pid))
+					for pid in [ancestor_id, *branch.nodes, person_b_id]
+				),
+			)
+			for branch in state.lens2
+		)
+
+	return RelationshipSummary(
+		person_a=person_a_key,
+		person_b=person_b_key,
+		coefficient=result.coefficient,
+		ancestors=ancestors,
+		paths_to_a=paths_to_a,
+		paths_to_b=paths_to_b,
+	)
 

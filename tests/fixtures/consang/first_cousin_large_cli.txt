@@ -1,0 +1,8 @@
+Relationship coefficient between Cousin Adam and Cousin Bella: 0.062500
+  Ancestor Ancestor John:
+    Path to Cousin Adam: length=2, multiplicity=1, path=Ancestor John -> Parent Alex -> Cousin Adam
+    Path to Cousin Bella: length=2, multiplicity=1, path=Ancestor John -> Parent Beth -> Cousin Bella
+  Ancestor Ancestor Jane:
+    Path to Cousin Adam: length=2, multiplicity=1, path=Ancestor Jane -> Parent Alex -> Cousin Adam
+    Path to Cousin Bella: length=2, multiplicity=1, path=Ancestor Jane -> Parent Beth -> Cousin Bella
+Consanguinity refreshed for 9 persons (scratch mode).
