@@ -206,3 +206,9 @@ marimo/_static/
 marimo/_lsp/
 __marimo__/
 comparison_output/
+
+# GeneWeb tool artifacts
+*.gwo
+*.gwf
+*.lck
+*.gwb/

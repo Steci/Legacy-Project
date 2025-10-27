@@ -1,0 +1,15 @@
+{
+  "persons": [
+    {"id": 1, "parent_family": null},
+    {"id": 2, "parent_family": null},
+    {"id": 3, "parent_family": 1}
+  ],
+  "families": [
+    {"id": 1, "father": 1, "mother": 2, "children": [3]}
+  ],
+  "expected_consanguinity": {
+    "1": 0.0,
+    "2": 0.0,
+    "3": 0.0
+  }
+}

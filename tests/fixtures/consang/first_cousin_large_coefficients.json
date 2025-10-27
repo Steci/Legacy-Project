@@ -1,0 +1,89 @@
+{
+  "source": "first_cousin_large.gw",
+  "expected_consanguinity": {
+    "Ancestor Jane": 0.0,
+    "Ancestor John": 0.0,
+    "Child Charles": 0.0625,
+    "Cousin Adam": 0.0,
+    "Cousin Bella": 0.0,
+    "Parent Alex": 0.0,
+    "Parent Beth": 0.0,
+    "Partner Alice": 0.0,
+    "Partner Brian": 0.0
+  },
+  "expected_relationships": {
+    "Ancestor John|Ancestor Jane": {
+      "coefficient": 0.0,
+      "ancestors": [],
+      "paths_to_a": {},
+      "paths_to_b": {}
+    },
+    "Cousin Adam|Cousin Bella": {
+      "coefficient": 0.0625,
+      "ancestors": [
+        "Ancestor John",
+        "Ancestor Jane"
+      ],
+      "paths_to_a": {
+        "Ancestor Jane": [
+          {
+            "length": 2,
+            "multiplicity": 1,
+            "path": [
+              "Ancestor Jane",
+              "Parent Alex",
+              "Cousin Adam"
+            ]
+          }
+        ],
+        "Ancestor John": [
+          {
+            "length": 2,
+            "multiplicity": 1,
+            "path": [
+              "Ancestor John",
+              "Parent Alex",
+              "Cousin Adam"
+            ]
+          }
+        ]
+      },
+      "paths_to_b": {
+        "Ancestor Jane": [
+          {
+            "length": 2,
+            "multiplicity": 1,
+            "path": [
+              "Ancestor Jane",
+              "Parent Beth",
+              "Cousin Bella"
+            ]
+          }
+        ],
+        "Ancestor John": [
+          {
+            "length": 2,
+            "multiplicity": 1,
+            "path": [
+              "Ancestor John",
+              "Parent Beth",
+              "Cousin Bella"
+            ]
+          }
+        ]
+      }
+    },
+    "Parent Alex|Partner Alice": {
+      "coefficient": 0.0,
+      "ancestors": [],
+      "paths_to_a": {},
+      "paths_to_b": {}
+    },
+    "Partner Brian|Parent Beth": {
+      "coefficient": 0.0,
+      "ancestors": [],
+      "paths_to_a": {},
+      "paths_to_b": {}
+    }
+  }
+}

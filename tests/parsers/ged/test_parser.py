@@ -1,22 +1,26 @@
-import os
-import sys
+from __future__ import annotations
+
 from textwrap import dedent
+from typing import Callable
 
 import pytest
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../src")))
-
-from parsers.ged.parser import GedcomParser
 from models.person.params import Sex
+from parsers.ged.parser import GedcomParser
 
 
-def parse_ged(text: str):
+@pytest.fixture()
+def parse_ged() -> Callable[[str], object]:
     parser = GedcomParser()
-    return parser.parse_content(text)
+
+    def _parse(text: str) -> object:
+        return parser.parse_content(text)
+
+    return _parse
 
 
 class TestHeaderParsing:
-    def test_header_fields_and_notes_db(self):
+    def test_header_fields_and_notes_db(self, parse_ged: Callable[[str], object]) -> None:
         ged_text = dedent(
             """\
             0 HEAD
@@ -39,7 +43,7 @@ class TestHeaderParsing:
 
 
 class TestIndividualParsing:
-    def test_individual_events_and_notes(self):
+    def test_individual_events_and_notes(self, parse_ged: Callable[[str], object]) -> None:
         ged_text = dedent(
             """\
             0 HEAD
@@ -85,7 +89,7 @@ class TestIndividualParsing:
 
 
 class TestFamilyParsing:
-    def test_family_members_events_and_notes(self):
+    def test_family_members_events_and_notes(self, parse_ged: Callable[[str], object]) -> None:
         ged_text = dedent(
             """\
             0 HEAD
@@ -135,7 +139,7 @@ class TestFamilyParsing:
 
 
 class TestNoteAndSourceAggregation:
-    def test_person_note_reference_and_sources(self):
+    def test_person_note_reference_and_sources(self, parse_ged: Callable[[str], object]) -> None:
         ged_text = dedent(
             """\
             0 HEAD
@@ -169,7 +173,7 @@ class TestNoteAndSourceAggregation:
 
 
 class TestAliasesAndRelationships:
-    def test_aliases_occupations_and_family_links(self):
+    def test_aliases_occupations_and_family_links(self, parse_ged: Callable[[str], object]) -> None:
         ged_text = dedent(
             """\
             0 HEAD
@@ -196,7 +200,7 @@ class TestAliasesAndRelationships:
 
 
 class TestSpecialRelationships:
-    def test_adoption_and_witnesses(self):
+    def test_adoption_and_witnesses(self, parse_ged: Callable[[str], object]) -> None:
         ged_text = dedent(
             """\
             0 HEAD
@@ -261,7 +265,7 @@ class TestSpecialRelationships:
 
 
 class TestFamilyEventHandling:
-    def test_divorce_sets_relation_and_custom_events(self):
+    def test_divorce_sets_relation_and_custom_events(self, parse_ged: Callable[[str], object]) -> None:
         ged_text = dedent(
             """\
             0 HEAD
@@ -314,7 +318,7 @@ class TestFamilyEventHandling:
 
 
 class TestPersonalEventVariants:
-    def test_residence_flag_and_custom_event_type(self):
+    def test_residence_flag_and_custom_event_type(self, parse_ged: Callable[[str], object]) -> None:
         ged_text = dedent(
             """\
             0 HEAD
@@ -349,4 +353,3 @@ class TestPersonalEventVariants:
         assert custom_event.date and custom_event.date.dmy.year == 1990
         assert "Military Service Files" in (getattr(custom_event, "source_notes", "") or "")
         assert "Served overseas" in (custom_event.note or "")
-

@@ -30,10 +30,23 @@ class GedcomParsedDatabase:
     notes: Dict[str, Note] = field(default_factory=dict)
     person_index: Dict[str, int] = field(default_factory=dict)
     family_index: Dict[str, int] = field(default_factory=dict)
+    consanguinity_warnings: List[str] = field(default_factory=list)
+    consanguinity_errors: List[str] = field(default_factory=list)
 
 
-def convert_legacy_database(database: GedcomDatabase) -> GedcomParsedDatabase:
-    """Convert the GEDCOM parser structures into the domain data-model."""
+def convert_legacy_database(
+    database: GedcomDatabase,
+    *,
+    compute_consanguinity: bool = False,
+) -> GedcomParsedDatabase:
+    """Convert the GEDCOM parser structures into the domain data-model.
+
+    Args:
+        database: Parsed GEDCOM structures.
+        compute_consanguinity: Whether to compute and attach consanguinity
+            coefficients to the resulting domain persons. Disabled by default
+            to keep the conversion phase side-effect free.
+    """
 
     person_index = _build_index_map(database.individuals.keys())
     family_index = _build_index_map(database.families.keys())
@@ -41,7 +54,7 @@ def convert_legacy_database(database: GedcomDatabase) -> GedcomParsedDatabase:
     families = _convert_families(database.families, person_index, family_index)
     individuals = _convert_persons(database.individuals, families, person_index, family_index)
 
-    return GedcomParsedDatabase(
+    parsed = GedcomParsedDatabase(
         header=dict(database.header),
         individuals=individuals,
         families=families,
@@ -50,6 +63,13 @@ def convert_legacy_database(database: GedcomDatabase) -> GedcomParsedDatabase:
         person_index=person_index,
         family_index=family_index,
     )
+
+    if compute_consanguinity:
+        from .refresh import refresh_consanguinity  # import locally to avoid cycle
+
+        refresh_consanguinity(parsed)
+
+    return parsed
 
 
 # ---------------------------------------------------------------------------

@@ -40,6 +40,9 @@ class Person:
     psources: Optional[str] = None
     access: Optional[str] = None  # e.g., "public", "private"
     key_index: Optional[int] = None  # Unique identifier for the person
+    consanguinity: float = 0.0
+    consanguinity_issue: Optional[str] = None
+    consanguinity_known: bool = False
 
     def __post_init__(self):
         """Post-initialization validation and setup"""

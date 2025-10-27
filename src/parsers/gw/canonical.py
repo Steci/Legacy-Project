@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from typing import Dict, Iterable, List, Optional, Tuple
+from typing import Dict, Iterable, List, Optional, Tuple, Set
 
 from models.date import Date, Precision
 from models.event import Event, Place
@@ -11,6 +11,7 @@ from models.person.params import Sex as PersonSex
 
 from ..ged.models import GedcomDatabase, GedcomFamily, GedcomPerson
 from .models import GWDatabase, Family as GWFamily
+from .exporter import build_relationship_blocks
 
 
 BR_TAG_RE = re.compile(r"<br\s*/?>", re.IGNORECASE)
@@ -51,6 +52,8 @@ class CanonicalPerson:
     key: str
     sex: Optional[str]
     events: Tuple[CanonicalEvent, ...]
+    consanguinity: float = 0.0
+    consanguinity_issue: Optional[str] = None
 
 
 @dataclass(frozen=True)
@@ -71,6 +74,8 @@ class CanonicalDatabase:
     persons: Tuple[CanonicalPerson, ...]
     notes: Tuple[CanonicalNote, ...]
     relations: Tuple[CanonicalRelation, ...]
+    consanguinity_warnings: Tuple[str, ...] = ()
+    consanguinity_errors: Tuple[str, ...] = ()
 
 
 def canonicalize_gw(database: GWDatabase) -> CanonicalDatabase:
@@ -112,6 +117,8 @@ def canonicalize_gw(database: GWDatabase) -> CanonicalDatabase:
                 key=key,
                 sex=sex_map.get(key),
                 events=events,
+                consanguinity=float(getattr(person, "consanguinity", 0.0) or 0.0),
+                consanguinity_issue=getattr(person, "consanguinity_issue", None),
             )
         )
 
@@ -123,10 +130,7 @@ def canonicalize_gw(database: GWDatabase) -> CanonicalDatabase:
         for note in sorted(database.notes, key=lambda n: n.person_key)
     )
 
-    relations = tuple(
-        CanonicalRelation(person_key=rel.person_key, lines=tuple(rel.lines))
-        for rel in sorted(database.relations, key=lambda r: r.person_key)
-    )
+    relations = _build_canonical_relations(database)
 
     families_sorted = tuple(
         sorted(
@@ -147,6 +151,8 @@ def canonicalize_gw(database: GWDatabase) -> CanonicalDatabase:
         persons=persons_sorted,
         notes=notes,
         relations=relations,
+        consanguinity_warnings=tuple(getattr(database, "consanguinity_warnings", []) or ()),
+        consanguinity_errors=tuple(getattr(database, "consanguinity_errors", []) or ()),
     )
 
 
@@ -627,3 +633,52 @@ def _deduplicate_events(events: List[CanonicalEvent]) -> List[CanonicalEvent]:
         seen.add(key)
         unique.append(event)
     return unique
+
+
+def _build_canonical_relations(database: GWDatabase) -> Tuple[CanonicalRelation, ...]:
+    relation_lines: Dict[str, List[str]] = {}
+    existing_targets: Dict[str, Set[str]] = {}
+
+    for block in getattr(database, "relations", []) or []:
+        lines = list(block.lines)
+        if not lines:
+            continue
+        relation_lines.setdefault(block.person_key, []).extend(lines)
+        targets = existing_targets.setdefault(block.person_key, set())
+        targets.update(filter(None, (_parse_rel_target(line) for line in lines)))
+
+    summaries = getattr(database, "relationship_summaries", {}) or {}
+    summary_blocks = build_relationship_blocks(summaries)
+
+    for person_key, blocks in summary_blocks.items():
+        targets = existing_targets.setdefault(person_key, set())
+        lines = relation_lines.setdefault(person_key, [])
+        for block_lines in blocks:
+            other = _parse_rel_target(block_lines[0]) if block_lines else None
+            if other and other in targets:
+                continue
+            if lines and lines[-1] != "":
+                lines.append("")
+            lines.extend(block_lines)
+            if other:
+                targets.add(other)
+
+    canonical_relations = tuple(
+        CanonicalRelation(person_key=person_key, lines=tuple(lines))
+        for person_key, lines in sorted(relation_lines.items(), key=lambda item: item[0])
+    )
+
+    return canonical_relations
+
+
+def _parse_rel_target(line: str) -> Optional[str]:
+    stripped = (line or "").strip()
+    lower = stripped.lower()
+    if not lower.startswith("- rel"):
+        return None
+    _, _, remainder = stripped.partition(":")
+    target = remainder.strip()
+    if not target:
+        return None
+    target = target.split(" coef", 1)[0].strip()
+    return target or None

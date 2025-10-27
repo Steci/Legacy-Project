@@ -2,13 +2,14 @@
 from __future__ import annotations
 
 import re
-from typing import Dict, Iterable, List, Optional, Sequence, Set, Tuple
+from typing import Dict, Iterable, List, Optional, Sequence, Set, Tuple, Mapping
 
 from models.date import Date, Precision
 from models.event import Event, Place
 from models.person.params import Sex
 
 from ..ged.models import GedcomDatabase, GedcomFamily, GedcomPerson
+from consang.relationship import RelationshipSummary
 
 
 _MONTHS = {
@@ -42,6 +43,76 @@ _FRENCH_MONTHS = {
     "FRUC": 12,
     "COMP": 13,
 }
+
+
+def _format_branch_route(path: Tuple[str, ...]) -> str:
+    return " -> ".join(path)
+
+
+def _format_multiplicity(value: int) -> str:
+    if value < 0:
+        return "inf"
+    return str(value)
+
+
+def _render_summary_lines(
+    summary: RelationshipSummary,
+    *,
+    focus_is_a: bool,
+) -> List[str]:
+    person_self = summary.person_a if focus_is_a else summary.person_b
+    person_other = summary.person_b if focus_is_a else summary.person_a
+    paths_self = summary.paths_to_a if focus_is_a else summary.paths_to_b
+    paths_other = summary.paths_to_b if focus_is_a else summary.paths_to_a
+
+    lines: List[str] = [f"- rel: {person_other} coef={summary.coefficient:.6f}"]
+    if not summary.ancestors:
+        lines.append("  ancestor: (none)")
+        return lines
+
+    for ancestor in summary.ancestors:
+        lines.append(f"  ancestor: {ancestor}")
+
+        for branch in paths_self.get(ancestor, ()):  # pragma: no branch - linear loop
+            lines.append(
+                "    self-path: length={length} mult={mult} route={route}".format(
+                    length=branch.length,
+                    mult=_format_multiplicity(branch.multiplicity),
+                    route=_format_branch_route(branch.path),
+                )
+            )
+
+        for branch in paths_other.get(ancestor, ()):  # pragma: no branch - linear loop
+            lines.append(
+                "    other-path: length={length} mult={mult} route={route}".format(
+                    length=branch.length,
+                    mult=_format_multiplicity(branch.multiplicity),
+                    route=_format_branch_route(branch.path),
+                )
+            )
+
+    return lines
+
+
+def build_relationship_blocks(
+    summaries: Mapping[Tuple[str, str], RelationshipSummary]
+) -> Dict[str, List[List[str]]]:
+    blocks: Dict[str, List[Tuple[str, List[str]]]] = {}
+
+    for _, summary in sorted(summaries.items(), key=lambda item: item[0]):
+        for focus_is_a in (True, False):
+            lines = _render_summary_lines(summary, focus_is_a=focus_is_a)
+            person_self = summary.person_a if focus_is_a else summary.person_b
+            person_other = summary.person_b if focus_is_a else summary.person_a
+            entries = blocks.setdefault(person_self, [])
+            entries.append((person_other, lines))
+
+    formatted: Dict[str, List[List[str]]] = {}
+    for person, entries in blocks.items():
+        ordered = sorted(entries, key=lambda item: item[0])
+        formatted[person] = [lines for (_, lines) in ordered]
+
+    return formatted
 
 
 def _event_tag(event: Optional[Event]) -> str:
@@ -218,7 +289,12 @@ class GenewebExporter:
         self._emitted_persons: Set[str] = set()
         self._display_name_tokens: Dict[str, Tuple[str, ...]] = {}
 
-    def export(self, database: GedcomDatabase) -> str:
+    def export(
+        self,
+        database: GedcomDatabase,
+        *,
+        relationship_summaries: Optional[Mapping[Tuple[str, str], RelationshipSummary]] = None,
+    ) -> str:
         self._lines = ["encoding: utf-8", "gwplus", ""]
         self._emitted_notes = set()
         self._emitted_persons = set()
@@ -264,6 +340,10 @@ class GenewebExporter:
                 for line in note_lines:
                     self._lines.append(f"  {line}")
                 self._lines.append("end notes-db")
+
+        if relationship_summaries:
+            rel_blocks = build_relationship_blocks(relationship_summaries)
+            self._emit_relationship_blocks(rel_blocks)
 
         return "\n".join(self._lines).rstrip() + "\n"
 
@@ -393,6 +473,23 @@ class GenewebExporter:
                 self._lines.append(formatted)
         self._lines.append("end pevt")
         self._lines.append("")
+
+    def _emit_relationship_blocks(self, blocks: Dict[str, List[List[str]]]) -> None:
+        if not blocks:
+            return
+
+        for person_key in sorted(blocks):
+            entries = blocks[person_key]
+            if not entries:
+                continue
+            if self._lines and self._lines[-1] != "":
+                self._lines.append("")
+            self._lines.append(f"rel {person_key}")
+            self._lines.append("beg")
+            for lines in entries:
+                for line in lines:
+                    self._lines.append(line)
+            self._lines.append("end")
 
     def _collect_person_events(self, person: GedcomPerson) -> Sequence[Tuple[str, Event]]:
         events: List[Tuple[str, Event]] = []
