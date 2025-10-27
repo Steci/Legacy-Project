@@ -1,17 +1,11 @@
-import os
-import sys
+from __future__ import annotations
 
-sys.path.insert(
-    0,
-    os.path.abspath(os.path.join(os.path.dirname(__file__), "../src")),
-)
-
-from consang.relationship import BranchPath, RelationshipSummary  # type: ignore[import]
-from parsers.ged.models import GedcomDatabase, GedcomFamily, GedcomPerson  # type: ignore[import]
-from parsers.gw.exporter import GenewebExporter  # type: ignore[import]
+from consang.relationship import BranchPath, RelationshipSummary
+from parsers.ged.models import GedcomDatabase, GedcomFamily, GedcomPerson
+from parsers.gw.exporter import GenewebExporter
 
 
-def _build_minimal_gedcom_database():
+def _build_minimal_gedcom_database() -> GedcomDatabase:
     database = GedcomDatabase()
 
     husband = GedcomPerson(xref_id="@I1@", first_name="John", surname="Smith")

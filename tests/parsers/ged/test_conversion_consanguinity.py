@@ -1,15 +1,12 @@
-import os
-import sys
+from __future__ import annotations
 
 import pytest
 
-sys.path.insert(0, os.path.abspath("src"))
-
-from models.family.family import RelationKind  # type: ignore[import-not-found]
-from models.person.params import Sex as PersonSex  # type: ignore[import-not-found]
-from parsers.ged.conversion import convert_legacy_database  # type: ignore[import-not-found]
-from parsers.ged.models import GedcomDatabase, GedcomFamily, GedcomPerson  # type: ignore[import-not-found]
-from parsers.ged.refresh import refresh_consanguinity  # type: ignore[import-not-found]
+from models.family.family import RelationKind
+from models.person.params import Sex as PersonSex
+from parsers.ged.conversion import convert_legacy_database
+from parsers.ged.models import GedcomDatabase, GedcomFamily, GedcomPerson
+from parsers.ged.refresh import refresh_consanguinity
 
 
 def _build_inbred_database() -> GedcomDatabase:
@@ -55,7 +52,7 @@ def _build_inbred_database() -> GedcomDatabase:
     return db
 
 
-def test_conversion_is_pure_by_default():
+def test_conversion_is_pure_by_default() -> None:
     database = _build_inbred_database()
 
     parsed = convert_legacy_database(database)
@@ -66,7 +63,7 @@ def test_conversion_is_pure_by_default():
     assert parsed.consanguinity_errors == []
 
 
-def test_refresh_consanguinity_computes_coefficients():
+def test_refresh_consanguinity_computes_coefficients() -> None:
     database = _build_inbred_database()
 
     parsed = convert_legacy_database(database)
@@ -77,7 +74,7 @@ def test_refresh_consanguinity_computes_coefficients():
     assert parsed.consanguinity_warnings == []
 
 
-def test_conversion_can_opt_in_to_consanguinity():
+def test_conversion_can_opt_in_to_consanguinity() -> None:
     database = _build_inbred_database()
 
     parsed = convert_legacy_database(database, compute_consanguinity=True)

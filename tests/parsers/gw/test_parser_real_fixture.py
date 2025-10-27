@@ -1,19 +1,17 @@
-import os
-import sys
+from __future__ import annotations
+
 from pathlib import Path
 
 import pytest
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../src")))
-
-from parsers.gw.loader import load_geneweb_file
 from parsers.gw.canonical import canonicalize_gw
+from parsers.gw.loader import load_geneweb_file
 
 
-FIXTURE_PATH = Path(__file__).resolve().parents[1] / "examples_files" / "example.gw"
+FIXTURE_PATH = Path(__file__).resolve().parents[3] / "examples_files" / "example.gw"
 
 
-def test_real_geneweb_fixture_refreshes_consanguinity():
+def test_real_geneweb_fixture_refreshes_consanguinity() -> None:
     db = load_geneweb_file(str(FIXTURE_PATH))
 
     assert len(db.persons) == 2

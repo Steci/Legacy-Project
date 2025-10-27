@@ -1,17 +1,16 @@
+from __future__ import annotations
+
 import json
-import os
-import sys
 from pathlib import Path
 
 import pytest
-
-sys.path.insert(0, os.path.abspath("src"))
 
 from consang import compute_for_domain
 from models.family.family import Family
 from models.person.person import Person
 
-FIXTURE_DIR = Path(__file__).parent / "fixtures" / "consang"
+TESTS_DIR = next(parent for parent in Path(__file__).resolve().parents if parent.name == "tests")
+FIXTURE_DIR = TESTS_DIR / "fixtures" / "consang"
 
 
 def load_fixture(name: str):
