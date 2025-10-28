@@ -4,15 +4,17 @@ import pytest
 
 from consang.models import FamilyNode, PersonNode
 from sosa import (
-	InconsistentSosaNumberError,
-	MissingRootError,
-	SosaNavigation,
-	SosaNumber,
-	build_sosa_cache,
-	compute_single_sosa,
-	get_sosa_number,
-	next_sosa,
-	previous_sosa,
+    InconsistentSosaNumberError,
+    MissingRootError,
+    SosaNavigation,
+    SosaNumber,
+    branch_of_sosa,
+    build_sosa_cache,
+    compute_single_sosa,
+    get_sosa_number,
+    next_sosa,
+    p_of_sosa,
+    previous_sosa,
 )
 
 from tests.sosa.common import build_simple_tree
@@ -192,3 +194,40 @@ def test_navigation_handles_missing_reference():
 
 	assert next_sosa(cache, 50) is None
 	assert previous_sosa(cache, 0) is None
+
+
+def test_branch_of_sosa_returns_path_to_ancestor():
+	persons, families = build_simple_tree()
+
+	path = branch_of_sosa(persons, families, root_id=1, number=4)
+	assert path == [4, 2, 1]
+
+	path = branch_of_sosa(persons, families, root_id=1, number=3)
+	assert path == [3, 1]
+
+
+def test_branch_of_sosa_returns_none_when_branch_missing():
+	persons, families = build_simple_tree()
+	families[2] = FamilyNode(family_id=2, father_id=4, mother_id=None, children=(2,))
+
+	path = branch_of_sosa(persons, families, root_id=1, number=5)
+	assert path is None
+
+
+def test_branch_of_sosa_raises_for_invalid_inputs():
+	persons, families = build_simple_tree()
+
+	with pytest.raises(ValueError):
+		branch_of_sosa(persons, families, root_id=1, number=0)
+
+	with pytest.raises(MissingRootError):
+		branch_of_sosa(persons, families, root_id=99, number=1)
+
+
+def test_p_of_sosa_returns_first_element_of_branch():
+	persons, families = build_simple_tree()
+
+	assert p_of_sosa(persons, families, root_id=1, number=6) == 6
+
+	families[3] = FamilyNode(family_id=3, father_id=6, mother_id=None, children=(3,))
+	assert p_of_sosa(persons, families, root_id=1, number=7) is None

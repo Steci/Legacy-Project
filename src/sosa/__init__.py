@@ -1,10 +1,12 @@
 """Top-level exports for the Sosa numbering package."""
 
 from .calculator import (
+    branch_of_sosa,
     build_sosa_cache,
     compute_single_sosa,
     get_sosa_number,
     next_sosa,
+    p_of_sosa,
     previous_sosa,
 )
 from .config import resolve_root_id, SosaCacheManager
@@ -27,7 +29,9 @@ __all__ = [
     "compute_single_sosa",
     "get_sosa_number",
     "next_sosa",
+    "branch_of_sosa",
     "previous_sosa",
+    "p_of_sosa",
     "resolve_root_id",
     "SosaCacheManager",
     "SosaCacheState",

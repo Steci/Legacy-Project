@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from bisect import bisect_left, bisect_right
 from collections import deque
-from typing import Deque, Dict, Optional, Tuple
+from typing import Deque, Dict, List, Mapping, Optional, Tuple
 
 from consang.models import FamilyNode, PersonNode
 
@@ -105,6 +105,76 @@ def previous_sosa(cache: SosaCacheState, current_number: int) -> Optional[SosaNa
     return cache.navigation(numbers[index])
 
 
+def branch_of_sosa(
+    persons: Mapping[int, PersonNode],
+    families: Mapping[int, FamilyNode],
+    *,
+    root_id: int,
+    number: int,
+) -> Optional[List[int]]:
+    """Return the ancestor branch for ``number`` starting from ``root_id``.
+
+    The returned list starts with the ancestor referenced by ``number`` and
+    continues down to the root individual. Missing parent links return
+    ``None``. ``number`` must be a positive integer.
+    """
+
+    if number < 1:
+        raise ValueError("Sosa numbers must be positive integers")
+
+    if root_id not in persons:
+        raise MissingRootError(root_id)
+
+    if number == 1:
+        return [root_id]
+
+    directions = _expand_branch(number)
+    current_id = root_id
+    visited: List[int] = []
+
+    for direction in directions:
+        visited.append(current_id)
+        person = persons.get(current_id)
+        if person is None:
+            return None
+
+        family_id = getattr(person, "parent_family_id", None)
+        if family_id is None:
+            return None
+
+        family = families.get(family_id)
+        if family is None:
+            return None
+
+        next_id = family.father_id if direction == 0 else family.mother_id
+        if next_id in (None, 0):
+            return None
+
+        current_id = next_id
+
+    return [current_id] + list(reversed(visited))
+
+
+def p_of_sosa(
+    persons: Mapping[int, PersonNode],
+    families: Mapping[int, FamilyNode],
+    *,
+    root_id: int,
+    number: int,
+) -> Optional[int]:
+    """Return the identifier of the ancestor referenced by ``number``."""
+
+    branch = branch_of_sosa(
+        persons,
+        families,
+        root_id=root_id,
+        number=number,
+    )
+    if not branch:
+        return None
+    return branch[0]
+
+
 def _lookup_parents(
     person: PersonNode,
     families: Dict[int, FamilyNode],
@@ -122,3 +192,15 @@ def _lookup_parents(
     father_id: Optional[int] = family.father_id if family.father_id not in (None, 0) else None
     mother_id: Optional[int] = family.mother_id if family.mother_id not in (None, 0) else None
     return father_id, mother_id
+
+
+def _expand_branch(number: int) -> List[int]:
+    """Return branch directions for ``number`` (0 for father, 1 for mother)."""
+
+    directions: List[int] = []
+    current = number
+    while current > 1:
+        directions.append(0 if current % 2 == 0 else 1)
+        current //= 2
+    directions.reverse()
+    return directions
