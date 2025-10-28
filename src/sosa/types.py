@@ -16,6 +16,14 @@ class SosaNumber:
     value: int
 
 
+@dataclass(frozen=True)
+class SosaNavigation:
+    """Describe a navigation target tied to a Sosa number."""
+
+    number: int
+    person_id: int
+
+
 @dataclass
 class SosaCacheState:
     """Store computed Sosa numbers and navigation order."""
@@ -70,6 +78,19 @@ class SosaCacheState:
         """Return the person identifier owning a given Sosa number."""
 
         return self.persons_by_number.get(value)
+
+    def navigation(self, number: int) -> Optional[SosaNavigation]:
+        """Return a navigation entry for a given Sosa number."""
+
+        person_id = self.get_person(number)
+        if person_id is None:
+            return None
+        return SosaNavigation(number=number, person_id=person_id)
+
+    def sorted_numbers(self) -> List[int]:
+        """Return all cached Sosa numbers in ascending order."""
+
+        return sorted(self.persons_by_number)
 
     def iter_numbers(self) -> Iterator[SosaNumber]:
         """Yield SosaNumber entries in traversal order."""

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 from pathlib import Path
 from typing import Callable, Dict, Iterable, List, Optional, Tuple
@@ -11,6 +12,7 @@ from parsers.gw.exporter import GenewebExporter
 from parsers.gw.loader import load_geneweb_file
 from parsers.gw.refresh import refresh_consanguinity
 
+from consang.adapters import build_nodes_from_domain
 from consang.cousin_degree import (
     build_cousin_listings,
     build_default_spouse_lookup,
@@ -20,6 +22,12 @@ from consang.cousin_degree import (
     PersonTemporalData,
 )
 from consang.relationship import summarize_relationship
+from sosa import (
+    MissingRootError,
+    SosaCacheManager,
+    build_navigation_summary,
+    resolve_root_id,
+)
 
 
 def _format_branch_path(path: Tuple[str, ...]) -> str:
@@ -172,6 +180,83 @@ def _emit_relationship_report(
     return 0
 
 
+def _emit_sosa_summary(
+    database,
+    *,
+    root_override: Optional[int],
+    quiet_level: int,
+) -> int:
+    persons_iter = getattr(database, "consanguinity_persons", None)
+    families_iter = getattr(database, "consanguinity_families", None)
+    if not persons_iter or not families_iter:
+        persons_iter = getattr(database, "persons", None)
+        families_iter = getattr(database, "families", None)
+    if not persons_iter or not families_iter:
+        print("No persons or families available for Sosa computation.", file=sys.stderr)
+        return 1
+
+    persons = list(persons_iter.values()) if isinstance(persons_iter, dict) else list(persons_iter)
+    families = list(families_iter)
+    if not persons:
+        print("Empty person list; Sosa computation skipped.", file=sys.stderr)
+        return 1
+
+    person_nodes, family_nodes = build_nodes_from_domain(
+        persons,
+        families,
+        from_scratch=False,
+    )
+    if not person_nodes:
+        print("No person nodes produced; cannot compute Sosa numbering.", file=sys.stderr)
+        return 1
+
+    manager = SosaCacheManager(person_nodes, family_nodes)
+    settings = getattr(database, "settings", {}) or {}
+    root_id = resolve_root_id(
+        root_override,
+        settings=settings,
+        env=os.environ,
+    )
+    if root_id is None:
+        print(
+            "No Sosa root configured; supply --sosa-root or set SOSA_ROOT.",
+            file=sys.stderr,
+        )
+        return 1
+
+    try:
+        cache = manager.get_cache(root_id)
+    except MissingRootError:
+        print(f"Sosa root id {root_id} not found in dataset.", file=sys.stderr)
+        return 1
+
+    summary = build_navigation_summary(cache, root_id)
+    if summary is None:
+        print(f"No Sosa numbering available for person {root_id}.", file=sys.stderr)
+        return 1
+
+    if quiet_level >= 2:
+        return 0
+
+    index_to_key = getattr(database, "relationship_index_to_key", {}) or {}
+
+    def _label(entry) -> str:
+        if entry is None:
+            return "-"
+        number = getattr(entry, "number", None)
+        person_id = getattr(entry, "person_id", None)
+        person_label = index_to_key.get(person_id, str(person_id))
+        return f"{number} ({person_label})"
+
+    current_label = index_to_key.get(summary.current.person_id, str(summary.current.person_id))
+    print(
+        "Sosa navigation for "
+        f"{current_label}: current={_label(summary.current)}, "
+        f"previous={_label(summary.previous)}, next={_label(summary.next)}"
+    )
+    return 0
+
+
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="python -m consang",
@@ -208,6 +293,16 @@ def _build_parser() -> argparse.ArgumentParser:
         metavar=("PERSON_A", "PERSON_B"),
         help="Print the relationship coefficient and branches between two persons.",
     )
+    parser.add_argument(
+        "--with-sosa",
+        action="store_true",
+        help="Display Sosa numbering summary for the configured root.",
+    )
+    parser.add_argument(
+        "--sosa-root",
+        type=int,
+        help="Override the Sosa root person key index (defaults to configuration/env).",
+    )
     return parser
 
 
@@ -241,6 +336,16 @@ def run(argv: Optional[Iterable[str]] = None) -> int:
             status,
             _emit_relationship_report(
                 database, list(args.relationship), quiet_level=args.quiet or 0
+            ),
+        )
+
+    if args.with_sosa:
+        status = max(
+            status,
+            _emit_sosa_summary(
+                database,
+                root_override=args.sosa_root,
+                quiet_level=args.quiet or 0,
             ),
         )
 

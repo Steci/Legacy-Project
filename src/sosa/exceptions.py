@@ -12,8 +12,12 @@ class SosaError(Exception):
 class MissingRootError(SosaError):
     """Raised when the requested root person is absent from the dataset."""
 
-    def __init__(self, root_id: int) -> None:
-        super().__init__(f"root person {root_id} is not available")
+    def __init__(self, root_id: int | None) -> None:
+        if root_id is None:
+            message = "no Sosa root configured"
+        else:
+            message = f"root person {root_id} is not available"
+        super().__init__(message)
         self.root_id = root_id
 
 
