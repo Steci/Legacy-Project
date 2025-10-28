@@ -175,6 +175,56 @@ def p_of_sosa(
     return branch[0]
 
 
+def sosa_of_branch(
+    persons: Mapping[int, PersonNode],
+    families: Mapping[int, FamilyNode],
+    *,
+    branch: List[int],
+) -> Optional[int]:
+    """Return the Sosa number represented by ``branch`` when valid.
+
+    ``branch`` must list ancestor identifiers starting from the targeted
+    ancestor down to the root individual. When inconsistent ancestry links are
+    encountered the function returns ``None`` rather than guessing.
+    """
+
+    if not branch:
+        raise ValueError("Branch must contain at least one person identifier")
+
+    if len(branch) == 1:
+        return 1
+
+    current_number = 1
+    ordered_branch = list(reversed(branch))
+
+    for index in range(1, len(ordered_branch)):
+        child_id = ordered_branch[index - 1]
+        parent_id = ordered_branch[index]
+
+        child = persons.get(child_id)
+        if child is None:
+            return None
+
+        family_id = getattr(child, "parent_family_id", None)
+        if family_id is None:
+            return None
+
+        family = families.get(family_id)
+        if family is None:
+            return None
+
+        current_number *= 2
+
+        if family.mother_id == parent_id:
+            current_number += 1
+        elif family.father_id == parent_id:
+            pass
+        else:
+            return None
+
+    return current_number
+
+
 def _lookup_parents(
     person: PersonNode,
     families: Dict[int, FamilyNode],

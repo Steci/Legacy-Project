@@ -8,6 +8,7 @@ from .calculator import (
     next_sosa,
     p_of_sosa,
     previous_sosa,
+    sosa_of_branch,
 )
 from .config import resolve_root_id, SosaCacheManager
 from .exceptions import (
@@ -32,6 +33,7 @@ __all__ = [
     "branch_of_sosa",
     "previous_sosa",
     "p_of_sosa",
+    "sosa_of_branch",
     "resolve_root_id",
     "SosaCacheManager",
     "SosaCacheState",
