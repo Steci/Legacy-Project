@@ -1,13 +1,18 @@
 import sys
-import os
+from pathlib import Path
+
 import pytest
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../src")))
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+SRC_DIR = PROJECT_ROOT / "src"
+for candidate in (PROJECT_ROOT, SRC_DIR):
+    if str(candidate) not in sys.path:
+        sys.path.insert(0, str(candidate))
 
-from search_engine.genealogy_search_api import GenealogySearchAPI
-from models.person.person import Person
-from models.family.family import Family
-from models.person.params import Sex
+from search_engine.genealogy_search_api import GenealogySearchAPI  # type: ignore[import]
+from models.person.person import Person  # type: ignore[import]
+from models.family.family import Family  # type: ignore[import]
+from models.person.params import Sex  # type: ignore[import]
 
 
 # Helper to create Person and Family with correct fields
@@ -19,10 +24,10 @@ def make_person(key_index, first_name, surname, sex=None):
         key_index=key_index
     )
 
-def make_family(key_index, parent1=None, parent2=None, children=None):
+def make_family(key_index, parent1, parent2, children=None):
     return Family(
-        parent1=parent1 if parent1 is not None else 0,
-        parent2=parent2 if parent2 is not None else 0,
+        parent1=parent1,
+        parent2=parent2,
         children=children or [],
         key_index=key_index
     )
@@ -50,7 +55,7 @@ class TestGenealogySearchAPI:
 
     def test_find_relationship(self, persons, families):
         api = GenealogySearchAPI(persons, families)
-        resp = api.find_relationship("P1", "P3")
+        resp = api.find_relationship(1, 3)
         assert resp.success
         assert resp.data["relationship_type"] in {"parent", "child"}
 

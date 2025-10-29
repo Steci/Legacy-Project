@@ -4,7 +4,7 @@ import hashlib
 import pickle
 from collections import defaultdict
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Callable, Dict, Iterable, List, Optional, Tuple
 
@@ -498,7 +498,7 @@ def _aggregate_temporal_ranges(
 
     birth_years: set[int] = set()
     death_years: set[int] = set()
-    today_year = datetime.utcnow().year
+    today_year = datetime.now(timezone.utc).year
 
     for person_key in dict.fromkeys(tuple(entry.path_to_a.path) + tuple(entry.path_to_b.path)):
         info = lookup(person_key)
