@@ -1,0 +1,219 @@
+{% extends "base.html" %}
+
+{% block title %}{{ public_name }} - GeneWeb Legacy Project{% endblock %}
+
+{% block content %}
+<div style="max-width: 1100px; margin: 0 auto;">
+    <!-- Breadcrumb -->
+    <nav style="margin-bottom: 25px; color: #7f8c8d; font-size: 0.95em;">
+        <a href="{{ url_for('index') }}" style="color: #667eea; text-decoration: none; font-weight: 500;">🏠 Home</a>
+        <span style="margin: 0 8px;">›</span>
+        <a href="{{ url_for('search') }}" style="color: #667eea; text-decoration: none; font-weight: 500;">Search</a>
+        <span style="margin: 0 8px;">›</span>
+        <span style="color: #2c3e50; font-weight: 600;">{{ first_name }} {{ surname }}</span>
+    </nav>
+
+    <!-- Person Header Card -->
+    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px; border-radius: 12px; margin-bottom: 30px; color: white; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+        <div style="display: flex; align-items: start; gap: 20px;">
+            <!-- Avatar Placeholder -->
+            <div style="width: 100px; height: 100px; background-color: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 3em; flex-shrink: 0; border: 3px solid rgba(255,255,255,0.3);">
+                {% if sex == 'MALE' %}♂
+                {% elif sex == 'FEMALE' %}♀
+                {% else %}👤{% endif %}
+            </div>
+
+            <!-- Person Info -->
+            <div style="flex: 1;">
+                <h1 style="margin: 0 0 10px 0; font-size: 2.5em; font-weight: 600;">{{ public_name }}</h1>
+                <div style="display: flex; flex-wrap: wrap; gap: 15px; font-size: 1.1em; opacity: 0.95;">
+                    {% if birth_date or death_date %}
+                    <div>
+                        {% if birth_date %}{{ birth_date }}{% else %}?{% endif %}
+                        -
+                        {% if death_date %}{{ death_date }}{% else %}?{% endif %}
+                    </div>
+                    {% endif %}
+                    {% if occupation %}
+                    <div style="padding: 4px 12px; background-color: rgba(255,255,255,0.2); border-radius: 20px;">
+                        💼 {{ occupation }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-bottom: 30px;">
+        <!-- Personal Information Card -->
+        <div style="background-color: white; padding: 30px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+            <h2 style="color: #667eea; margin: 0 0 20px 0; font-size: 1.5em; display: flex; align-items: center; gap: 10px; border-bottom: 2px solid #f0f0f0; padding-bottom: 15px;">
+                👤 Personal Information
+            </h2>
+
+            <div style="display: grid; gap: 15px;">
+                <div>
+                    <div style="color: #7f8c8d; font-size: 0.9em; font-weight: 600; text-transform: uppercase; margin-bottom: 5px;">First Name</div>
+                    <div style="color: #2c3e50; font-size: 1.1em; font-weight: 500;">{{ first_name }}</div>
+                </div>
+
+                <div>
+                    <div style="color: #7f8c8d; font-size: 0.9em; font-weight: 600; text-transform: uppercase; margin-bottom: 5px;">Surname</div>
+                    <div style="color: #2c3e50; font-size: 1.1em; font-weight: 500;">{{ surname }}</div>
+                </div>
+
+                <div>
+                    <div style="color: #7f8c8d; font-size: 0.9em; font-weight: 600; text-transform: uppercase; margin-bottom: 5px;">Sex</div>
+                    <div style="color: #2c3e50; font-size: 1.1em;">
+                        {% if sex == 'MALE' %}
+                        <span style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; background-color: #e3f2fd; color: #1976d2; border-radius: 20px;">
+                            ♂ Male
+                        </span>
+                        {% elif sex == 'FEMALE' %}
+                        <span style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; background-color: #fce4ec; color: #c2185b; border-radius: 20px;">
+                            ♀ Female
+                        </span>
+                        {% else %}
+                        <span style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; background-color: #f5f5f5; color: #757575; border-radius: 20px;">
+                            Unknown
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                {% if occupation %}
+                <div>
+                    <div style="color: #7f8c8d; font-size: 0.9em; font-weight: 600; text-transform: uppercase; margin-bottom: 5px;">Occupation</div>
+                    <div style="color: #2c3e50; font-size: 1.1em; font-weight: 500;">{{ occupation }}</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Life Events Card -->
+        <div style="background-color: white; padding: 30px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+            <h2 style="color: #667eea; margin: 0 0 20px 0; font-size: 1.5em; display: flex; align-items: center; gap: 10px; border-bottom: 2px solid #f0f0f0; padding-bottom: 15px;">
+                📅 Life Events
+            </h2>
+
+            <div style="display: grid; gap: 20px;">
+                {% if birth_date or birth_place %}
+                <div>
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                        <div style="width: 35px; height: 35px; background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.2em;">🎂</div>
+                        <div style="color: #43e97b; font-weight: 600; font-size: 1.05em;">Birth</div>
+                    </div>
+                    <div style="margin-left: 43px;">
+                        {% if birth_date %}
+                        <div style="color: #2c3e50; font-size: 1.05em; margin-bottom: 4px;">
+                            <strong>Date:</strong> {{ birth_date }}
+                        </div>
+                        {% endif %}
+                        {% if birth_place %}
+                        <div style="color: #7f8c8d; font-size: 0.95em;">
+                            📍 {{ birth_place }}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if death_date or death_place %}
+                <div>
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                        <div style="width: 35px; height: 35px; background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.2em;">✝</div>
+                        <div style="color: #fa709a; font-weight: 600; font-size: 1.05em;">Death</div>
+                    </div>
+                    <div style="margin-left: 43px;">
+                        {% if death_date %}
+                        <div style="color: #2c3e50; font-size: 1.05em; margin-bottom: 4px;">
+                            <strong>Date:</strong> {{ death_date }}
+                        </div>
+                        {% endif %}
+                        {% if death_place %}
+                        <div style="color: #7f8c8d; font-size: 0.95em;">
+                            📍 {{ death_place }}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if not birth_date and not birth_place and not death_date and not death_place %}
+                <div style="text-align: center; padding: 20px; color: #95a5a6; font-style: italic;">
+                    No life events recorded
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Biographical Notes -->
+    {% if notes %}
+    <div style="background-color: white; padding: 30px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 30px;">
+        <h2 style="color: #667eea; margin: 0 0 20px 0; font-size: 1.5em; display: flex; align-items: center; gap: 10px; border-bottom: 2px solid #f0f0f0; padding-bottom: 15px;">
+            📝 Biographical Notes
+        </h2>
+        <div style="background: linear-gradient(to right, #f8f9fa, #ffffff); padding: 25px; border-radius: 8px; border-left: 4px solid #667eea;">
+            <div style="color: #2c3e50; line-height: 1.8; font-size: 1.05em; white-space: pre-wrap;">{{ notes }}</div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Additional Events -->
+    {% if events %}
+    <div style="background-color: white; padding: 30px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 30px;">
+        <h2 style="color: #667eea; margin: 0 0 20px 0; font-size: 1.5em; display: flex; align-items: center; gap: 10px; border-bottom: 2px solid #f0f0f0; padding-bottom: 15px;">
+            🎯 Other Events
+        </h2>
+        <div style="display: grid; gap: 15px;">
+            {% for event in events %}
+            <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; border-left: 4px solid #4facfe;">
+                <h3 style="color: #4facfe; font-size: 1.2em; margin: 0 0 12px 0;">{{ event.name }}</h3>
+                <div style="display: grid; gap: 8px;">
+                    {% if event.date %}
+                    <div style="color: #2c3e50;">
+                        <strong style="color: #7f8c8d;">Date:</strong> {{ event.date }}
+                    </div>
+                    {% endif %}
+                    {% if event.place %}
+                    <div style="color: #2c3e50;">
+                        <strong style="color: #7f8c8d;">Place:</strong> {{ event.place }}
+                    </div>
+                    {% endif %}
+                    {% if event.note %}
+                    <div style="margin-top: 8px; padding-top: 12px; border-top: 1px solid #dee2e6; color: #7f8c8d; font-style: italic;">
+                        {{ event.note }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Action Buttons -->
+    <div style="display: flex; gap: 15px; justify-content: center; margin-bottom: 30px; flex-wrap: wrap;">
+        <a href="{{ url_for('index') }}"
+           style="display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; background-color: #95a5a6; color: white; text-decoration: none; border-radius: 8px; font-weight: 600; transition: background-color 0.2s;">
+            ← Back to Home
+        </a>
+        <a href="{{ url_for('search') }}"
+           style="display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 8px; font-weight: 600; transition: opacity 0.2s;">
+            🔍 Search Database
+        </a>
+    </div>
+</div>
+
+<style>
+    a[style*="background-color: #95a5a6"]:hover {
+        background-color: #7f8c8d !important;
+    }
+
+    a[style*="background: linear-gradient"]:hover {
+        opacity: 0.9;
+    }
+</style>
+{% endblock %}
