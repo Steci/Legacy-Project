@@ -5,16 +5,10 @@ from dataclasses import dataclass
 from enum import Enum
 from collections import deque, defaultdict
 
-try:
-    # Try relative imports first (when imported as a package)
-    from ..models.person.person import Person
-    from ..models.family.family import Family
-    from ..models.family.params import RelationKind
-except ImportError:
-    # Fall back to absolute imports (when imported directly)
-    from models.person.person import Person
-    from models.family.family import Family
-    from models.family.params import RelationKind
+# Use only relative imports, as in src/parsers
+from models.person.person import Person
+from models.family.family import Family
+from models.family.params import RelationKind
 
 class RelationshipType(Enum):
     PARENT = "parent"
@@ -48,43 +42,43 @@ class RelationshipSearchEngine:
     
     def _build_relationship_graph(self):
         """Build graph of relationships for efficient traversal"""
-        self.person_to_idx = {person.key: i for i, person in enumerate(self.persons)}
+        self.person_to_idx = {person.key_index: i for i, person in enumerate(self.persons)}
         self.children_graph = defaultdict(set)  # parent -> children
         self.parents_graph = defaultdict(set)   # child -> parents
         self.spouse_graph = defaultdict(set)    # person -> spouses
-        
+
         for family in self.families:
             # Add parent-child relationships
-            if family.parent1_key:
-                parent1_idx = self.person_to_idx.get(family.parent1_key)
+            if family.parent1:
+                parent1_idx = self.person_to_idx.get(family.parent1)
                 if parent1_idx is not None:
-                    for child_key in family.children_keys:
+                    for child_key in family.children:
                         child_idx = self.person_to_idx.get(child_key)
                         if child_idx is not None:
                             self.children_graph[parent1_idx].add(child_idx)
                             self.parents_graph[child_idx].add(parent1_idx)
-            
-            if family.parent2_key:
-                parent2_idx = self.person_to_idx.get(family.parent2_key)
+
+            if family.parent2:
+                parent2_idx = self.person_to_idx.get(family.parent2)
                 if parent2_idx is not None:
-                    for child_key in family.children_keys:
+                    for child_key in family.children:
                         child_idx = self.person_to_idx.get(child_key)
                         if child_idx is not None:
                             self.children_graph[parent2_idx].add(child_idx)
                             self.parents_graph[child_idx].add(parent2_idx)
-            
+
             # Add spouse relationships
-            if family.parent1_key and family.parent2_key:
-                parent1_idx = self.person_to_idx.get(family.parent1_key)
-                parent2_idx = self.person_to_idx.get(family.parent2_key)
+            if family.parent1 and family.parent2:
+                parent1_idx = self.person_to_idx.get(family.parent1)
+                parent2_idx = self.person_to_idx.get(family.parent2)
                 if parent1_idx is not None and parent2_idx is not None:
                     self.spouse_graph[parent1_idx].add(parent2_idx)
                     self.spouse_graph[parent2_idx].add(parent1_idx)
     
-    def find_relationship(self, person1_key: str, person2_key: str, max_distance: int = 6) -> Optional[RelationshipPath]:
+    def find_relationship(self, person1_key_index: int, person2_key_index: int, max_distance: int = 6) -> Optional[RelationshipPath]:
         """Find the closest relationship between two persons"""
-        person1_idx = self.person_to_idx.get(person1_key)
-        person2_idx = self.person_to_idx.get(person2_key)
+        person1_idx = self.person_to_idx.get(person1_key_index)
+        person2_idx = self.person_to_idx.get(person2_key_index)
         
         if person1_idx is None or person2_idx is None:
             return None
@@ -229,9 +223,9 @@ class RelationshipSearchEngine:
                 return False
         return True
     
-    def find_all_relatives(self, person_key: str, max_distance: int = 4) -> Dict[RelationshipType, List[Person]]:
+    def find_all_relatives(self, person_key_index: int, max_distance: int = 4) -> Dict[RelationshipType, List[Person]]:
         """Find all relatives of a person within specified distance"""
-        person_idx = self.person_to_idx.get(person_key)
+        person_idx = self.person_to_idx.get(person_key_index)
         if person_idx is None:
             return {}
         
@@ -266,10 +260,10 @@ class RelationshipSearchEngine:
         
         return dict(relatives)
     
-    def find_common_ancestors(self, person1_key: str, person2_key: str, max_generations: int = 10) -> List[Person]:
+    def find_common_ancestors(self, person1_key_index: int, person2_key_index: int, max_generations: int = 10) -> List[Person]:
         """Find common ancestors of two persons"""
-        person1_idx = self.person_to_idx.get(person1_key)
-        person2_idx = self.person_to_idx.get(person2_key)
+        person1_idx = self.person_to_idx.get(person1_key_index)
+        person2_idx = self.person_to_idx.get(person2_key_index)
         
         if person1_idx is None or person2_idx is None:
             return []
@@ -301,9 +295,9 @@ class RelationshipSearchEngine:
         
         return ancestors
     
-    def find_descendants(self, person_key: str, max_generations: int = 10) -> List[Person]:
+    def find_descendants(self, person_key_index: int, max_generations: int = 10) -> List[Person]:
         """Find all descendants of a person"""
-        person_idx = self.person_to_idx.get(person_key)
+        person_idx = self.person_to_idx.get(person_key_index)
         if person_idx is None:
             return []
         
@@ -323,9 +317,9 @@ class RelationshipSearchEngine:
         
         return [self.persons[idx] for idx in descendants]
     
-    def find_living_relatives(self, person_key: str, max_distance: int = 3) -> List[Tuple[Person, RelationshipType, str]]:
+    def find_living_relatives(self, person_key_index: int, max_distance: int = 3) -> List[Tuple[Person, RelationshipType, str]]:
         """Find living relatives of a person"""
-        relatives = self.find_all_relatives(person_key, max_distance)
+        relatives = self.find_all_relatives(person_key_index, max_distance)
         living_relatives = []
         
         for rel_type, persons in relatives.items():

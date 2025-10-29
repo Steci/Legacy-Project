@@ -11,20 +11,12 @@ from enum import Enum
 import json
 from datetime import datetime
 
-try:
-    # Try relative imports first (when imported as a package)
-    from .search_engine import SearchEngine, SearchField, SearchType, AdvancedSearchCriteria, SearchResult
-    from .relationship_search import RelationshipSearchEngine, RelationshipType, RelationshipPath
-    from .statistics_engine import StatisticsEngine, StatisticsReport, NameStatistics
-    from ..models.person.person import Person
-    from ..models.family.family import Family
-except ImportError:
-    # Fall back to absolute imports (when imported directly)
-    from search_engine import SearchEngine, SearchField, SearchType, AdvancedSearchCriteria, SearchResult
-    from relationship_search import RelationshipSearchEngine, RelationshipType, RelationshipPath
-    from statistics_engine import StatisticsEngine, StatisticsReport, NameStatistics
-    from models.person.person import Person
-    from models.family.family import Family
+# Use only relative imports, as in src/parsers
+from search_engine.search_engine import SearchEngine, SearchField, SearchType, AdvancedSearchCriteria, SearchResult
+from search_engine.relationship_search import RelationshipSearchEngine, RelationshipType, RelationshipPath
+from search_engine.statistics_engine import StatisticsEngine, StatisticsReport, NameStatistics
+from models.person.person import Person
+from models.family.family import Family
 
 class APIResponse:
     """Standard API response wrapper"""

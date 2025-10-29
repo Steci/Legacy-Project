@@ -7,26 +7,13 @@ import re
 from difflib import SequenceMatcher
 from collections import defaultdict
 import unicodedata
-import sys
-import os
 
-# Add parent directory to path for imports
-sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
-
-try:
-    # Try relative imports first (when imported as a package)
-    from ..models.person.person import Person
-    from ..models.family.family import Family
-    from ..models.date import Date, DMY
-    from ..models.person.params import Sex, PEventType
-    from ..models.family.params import RelationKind
-except ImportError:
-    # Fall back to absolute imports (when imported directly)
-    from models.person.person import Person
-    from models.family.family import Family
-    from models.date import Date, DMY
-    from models.person.params import Sex, PEventType
-    from models.family.params import RelationKind
+# Use only relative imports, as in src/parsers
+from models.person.person import Person
+from models.family.family import Family
+from models.date import Date, DMY
+from models.person.params import Sex, PEventType
+from models.family.params import RelationKind
 
 class SearchType(Enum):
     EXACT = "exact"
@@ -114,7 +101,7 @@ class SearchEngine:
             self._index_name(person.first_name, self.first_name_index, i)
             self._index_name(person.surname, self.surname_index, i)
             self._index_name(person.full_name, self.name_index, i)
-            
+
             # Index aliases
             for alias in person.aliases:
                 self._index_name(alias, self.name_index, i)
@@ -122,21 +109,21 @@ class SearchEngine:
                 self._index_name(alias, self.first_name_index, i)
             for alias in person.surnames_aliases:
                 self._index_name(alias, self.surname_index, i)
-            
+
             if person.public_name:
                 self._index_name(person.public_name, self.name_index, i)
-            
+
             # Index occupation
             if person.occupation:
                 self._index_name(person.occupation, self.occupation_index, i)
-            
+
             # Index places from events
             for event in [person.birth, person.baptism, person.death, person.burial]:
                 if event and event.place:
                     place_str = self._extract_place_string(event.place)
                     if place_str:
                         self._index_name(place_str, self.place_index, i)
-            
+
             # Index years from events
             for event in [person.birth, person.baptism, person.death, person.burial]:
                 if event and event.date and event.date.dmy and event.date.dmy.year > 0:
@@ -263,14 +250,14 @@ class SearchEngine:
     def advanced_search(self, criteria: AdvancedSearchCriteria) -> List[SearchResult]:
         """Advanced search with multiple criteria - ALL criteria must match"""
         results = []
-        
+
         for i, person in enumerate(self.persons):
             score = 0.0
             matched_fields = []
             match_details = {}
             criteria_count = 0
-            all_match = True  # Flag to track if ALL criteria match
-            
+            all_match = True
+
             # Name criteria
             if criteria.first_name:
                 criteria_count += 1
@@ -281,11 +268,7 @@ class SearchEngine:
                     match_details["first_name"] = person.first_name
                 else:
                     all_match = False
-                    break  # Early exit if criterion fails
-            
-            if not all_match:
-                continue
-            
+
             if criteria.surname:
                 criteria_count += 1
                 s = self._calculate_match_score(criteria.surname, person.surname, criteria.search_type)
@@ -295,11 +278,7 @@ class SearchEngine:
                     match_details["surname"] = person.surname
                 else:
                     all_match = False
-                    break
-            
-            if not all_match:
-                continue
-                
+
             if criteria.public_name and person.public_name:
                 criteria_count += 1
                 s = self._calculate_match_score(criteria.public_name, person.public_name, criteria.search_type)
@@ -309,11 +288,7 @@ class SearchEngine:
                     match_details["public_name"] = person.public_name
                 else:
                     all_match = False
-                    break
-            
-            if not all_match:
-                continue
-            
+
             # Demographic criteria
             if criteria.sex is not None:
                 criteria_count += 1
@@ -323,11 +298,7 @@ class SearchEngine:
                     match_details["sex"] = person.sex.value
                 else:
                     all_match = False
-                    break
-            
-            if not all_match:
-                continue
-            
+
             # Date criteria
             birth_year = self._extract_year_from_event(person.birth)
             if criteria.birth_year_from is not None or criteria.birth_year_to is not None:
@@ -338,11 +309,7 @@ class SearchEngine:
                     match_details["birth_year"] = str(birth_year)
                 else:
                     all_match = False
-                    break
-            
-            if not all_match:
-                continue
-            
+
             death_year = self._extract_year_from_event(person.death)
             if criteria.death_year_from is not None or criteria.death_year_to is not None:
                 criteria_count += 1
@@ -352,11 +319,7 @@ class SearchEngine:
                     match_details["death_year"] = str(death_year)
                 else:
                     all_match = False
-                    break
-            
-            if not all_match:
-                continue
-            
+
             # Place criteria
             if criteria.birth_place:
                 criteria_count += 1
@@ -369,14 +332,9 @@ class SearchEngine:
                         match_details["birth_place"] = birth_place
                     else:
                         all_match = False
-                        break
                 else:
                     all_match = False
-                    break
-            
-            if not all_match:
-                continue
-            
+
             if criteria.death_place:
                 criteria_count += 1
                 death_place = self._extract_place_string(person.death.place) if person.death and person.death.place else ""
@@ -388,14 +346,9 @@ class SearchEngine:
                         match_details["death_place"] = death_place
                     else:
                         all_match = False
-                        break
                 else:
                     all_match = False
-                    break
-            
-            if not all_match:
-                continue
-            
+
             # Occupation criteria
             if criteria.occupation:
                 criteria_count += 1
@@ -407,14 +360,9 @@ class SearchEngine:
                         match_details["occupation"] = person.occupation
                     else:
                         all_match = False
-                        break
                 else:
                     all_match = False
-                    break
-            
-            if not all_match:
-                continue
-            
+
             # Title criteria
             if criteria.has_titles is not None:
                 criteria_count += 1
@@ -425,11 +373,7 @@ class SearchEngine:
                     match_details["has_titles"] = str(has_titles)
                 else:
                     all_match = False
-                    break
-            
-            if not all_match:
-                continue
-            
+
             # Alive in year criteria
             if criteria.alive_in_year:
                 criteria_count += 1
@@ -439,19 +383,18 @@ class SearchEngine:
                     match_details["alive_in_year"] = str(criteria.alive_in_year)
                 else:
                     all_match = False
-                    break
-            
+
             # If all criteria matched, add to results
             if all_match and criteria_count > 0:
                 final_score = score / criteria_count  # Average score across criteria
-                
+
                 results.append(SearchResult(
                     person=person,
                     score=final_score,
                     matched_fields=matched_fields,
                     match_details=match_details
                 ))
-        
+
         # Sort by score (descending) and limit results
         results.sort(key=lambda x: x.score, reverse=True)
         return results[:criteria.max_results]

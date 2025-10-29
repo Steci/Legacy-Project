@@ -6,18 +6,11 @@ from collections import defaultdict, Counter
 from datetime import datetime
 import statistics
 
-try:
-    # Try relative imports first (when imported as a package)
-    from ..models.person.person import Person
-    from ..models.family.family import Family
-    from ..models.date import Date, DMY
-    from ..models.person.params import Sex
-except ImportError:
-    # Fall back to absolute imports (when imported directly)
-    from models.person.person import Person
-    from models.family.family import Family
-    from models.date import Date, DMY
-    from models.person.params import Sex
+# Use only relative imports, as in src/parsers
+from models.person.person import Person
+from models.family.family import Family
+from models.date import Date, DMY
+from models.person.params import Sex
 
 @dataclass
 class StatisticsReport:
@@ -190,20 +183,20 @@ class StatisticsEngine:
         has_parents = set()
         
         for family in self.families:
-            num_children = len(family.children_keys)
-            if family.parent1_key:
-                children_count[family.parent1_key] += num_children
-            if family.parent2_key:
-                children_count[family.parent2_key] += num_children
-            
-            for child_key in family.children_keys:
+            num_children = len(family.children)
+            if family.parent1:
+                children_count[family.parent1] += num_children
+            if family.parent2:
+                children_count[family.parent2] += num_children
+
+            for child_key in family.children:
                 has_parents.add(child_key)
-        
+
         # Calculate statistics
-        root_ancestors = len([p for p in self.persons if p.key not in has_parents])
-        childless_persons = len([p for p in self.persons if children_count[p.key] == 0])
-        persons_with_children = len([p for p in self.persons if children_count[p.key] > 0])
-        
+        root_ancestors = len([p for p in self.persons if p.key_index not in has_parents])
+        childless_persons = len([p for p in self.persons if children_count[p.key_index] == 0])
+        persons_with_children = len([p for p in self.persons if children_count[p.key_index] > 0])
+
         return {
             'root_ancestors': root_ancestors,
             'childless_persons': childless_persons,
@@ -213,11 +206,11 @@ class StatisticsEngine:
     
     def _calculate_family_size_statistics(self) -> Dict[str, float]:
         """Calculate family size statistics"""
-        family_sizes = [len(family.children_keys) for family in self.families]
-        
+        family_sizes = [len(family.children) for family in self.families]
+
         if not family_sizes:
             return {}
-        
+
         return {
             'mean_children': statistics.mean(family_sizes),
             'median_children': statistics.median(family_sizes),
@@ -355,9 +348,13 @@ class StatisticsEngine:
         stats['has_sources'] = sum(1 for p in self.persons if p.sources) / total * 100
         
         # Family relationship completion
-        persons_with_families = sum(1 for p in self.persons 
-                                  if any(f for f in self.families 
-                                        if p.key in f.children_keys or p.key == f.parent1_key or p.key == f.parent2_key))
+        persons_with_families = sum(
+            1 for p in self.persons
+            if any(
+                f for f in self.families
+                if p.key_index in f.children or p.key_index == f.parent1 or p.key_index == f.parent2
+            )
+        )
         stats['has_family_connections'] = persons_with_families / total * 100
         
         return stats
@@ -380,7 +377,7 @@ class StatisticsEngine:
             
             # Check for missing critical data
             if not person.first_name and not person.surname:
-                issues['missing_names'].append(person.key)
+                issues['missing_names'].append(person.key_index)
             
             if not person.birth and not person.death:
                 issues['no_vital_dates'].append(f"{person.full_name}")
