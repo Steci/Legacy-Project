@@ -3,12 +3,21 @@ Request configuration and context.
 
 Translates geneweb/lib/config.ml
 Stores all request-specific state and settings.
+
+Integrates with existing models from src/models/
 """
 
 from dataclasses import dataclass, field
-from typing import Optional, Dict, List, Tuple
+from typing import Optional, Dict, List, Tuple, TYPE_CHECKING
 from enum import Enum
 from datetime import datetime, date
+
+# Use TYPE_CHECKING to avoid circular imports
+if TYPE_CHECKING:
+    from .output import Output, OutputHandler
+    from models.date import Date
+
+# Import at runtime for actual use
 from .output import Output, OutputHandler
 
 
@@ -30,7 +39,12 @@ class AuthInfo:
 
 @dataclass
 class DateDMY:
-    """Date in Day-Month-Year format"""
+    """
+    Date in Day-Month-Year format.
+
+    NOTE: This is a simplified version for config.
+    For full date handling, use models.date.Date and models.date.DMY
+    """
     day: int
     month: int
     year: int
