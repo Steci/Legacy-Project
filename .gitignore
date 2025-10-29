@@ -212,3 +212,7 @@ comparison_output/
 *.gwf
 *.lck
 *.gwb/
+
+# Project planning scratch files
+PLAN.md
+**/PLAN.md

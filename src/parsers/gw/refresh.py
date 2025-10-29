@@ -39,6 +39,8 @@ def refresh_consanguinity(database: GWDatabase, *, from_scratch: bool = True) ->
         return
 
     persons, families, index_to_key, key_to_index = prepared
+    database.consanguinity_persons = persons
+    database.consanguinity_families = families
     if not families:
         database.relationship_index_to_key = index_to_key
         database.relationship_key_to_index = key_to_index

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Dict, Iterable, List, Tuple
+from typing import Any, Dict, Iterable, List, Tuple
 
 from models.family.family import Family
 from models.person.person import Person
@@ -12,10 +12,33 @@ from .exceptions import ConsanguinityComputationError
 from .models import FamilyNode, PersonNode
 
 
-def _normalize_parent(identifier: int | None) -> int | None:
+def _normalize_parent(identifier: Any) -> int | None:
+    """Return a usable parent identifier from mixed domain representations."""
+
+    if hasattr(identifier, "key_index"):
+        identifier = getattr(identifier, "key_index")
+
     if identifier in (None, 0):
         return None
-    return identifier
+    if isinstance(identifier, int):
+        return identifier
+    return None
+
+
+def _extract_child_identifier(child: Any) -> int | None:
+    """Return the integer identifier for a child entry.
+
+    GeneWeb domain models may expose either numeric identifiers or Person
+    instances depending on when the adapter is invoked. The consanguinity
+    engine only accepts integers, so we normalize here.
+    """
+
+    if hasattr(child, "key_index"):
+        child = getattr(child, "key_index")
+
+    if child in (None, 0):
+        return None
+    return int(child) if isinstance(child, int) else None
 
 
 def build_nodes_from_domain(
@@ -48,8 +71,9 @@ def build_nodes_from_domain(
     for family in families_list:
         if family.key_index is None:
             continue
-        for child_id in family.children:
-            if child_id in (None, 0):
+        for child in getattr(family, "children", ()):  # defensive for varied representations
+            child_id = _extract_child_identifier(child)
+            if child_id is None:
                 continue
             parent_family_map[child_id] = family.key_index
 
@@ -67,9 +91,15 @@ def build_nodes_from_domain(
 
     family_nodes: Dict[int, FamilyNode] = {}
     for fid, family in family_lookup.items():
-        father_id = _normalize_parent(family.parent1)
-        mother_id = _normalize_parent(family.parent2)
-        children = tuple(child_id for child_id in family.children if child_id not in (None, 0))
+        father_id = _normalize_parent(getattr(family, "parent1", None))
+        mother_id = _normalize_parent(getattr(family, "parent2", None))
+        children = tuple(
+            child_id
+            for child_id in (
+                _extract_child_identifier(child) for child in getattr(family, "children", ())
+            )
+            if child_id is not None
+        )
         family_nodes[fid] = FamilyNode(
             family_id=fid,
             father_id=father_id,
