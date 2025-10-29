@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}Search - GeneWeb Legacy Project{% endblock %}
+
+{% block content %}
+<div style="max-width: 800px; margin: 0 auto;">
+    <h1 style="color: #2c3e50; margin-bottom: 30px;">Search Database</h1>
+
+    <form method="GET" action="{{ url_for('search') }}" style="margin-bottom: 40px;">
+        <div style="display: flex; gap: 10px;">
+            <input type="text"
+                   name="q"
+                   value="{{ query }}"
+                   placeholder="Search for persons, families, places..."
+                   style="flex: 1; padding: 12px; font-size: 1.1em; border: 2px solid #3498db; border-radius: 4px;">
+            <button type="submit"
+                    style="padding: 12px 30px; background-color: #3498db; color: white; border: none; border-radius: 4px; font-size: 1.1em; cursor: pointer;">
+                Search
+            </button>
+        </div>
+    </form>
+
+    {% if query %}
+    <div class="alert alert-info">
+        <h3 style="margin-top: 0;">Search Results for "{{ query }}"</h3>
+        <p>Search functionality is under development. This feature will allow you to search through:</p>
+        <ul>
+            <li>Person names (first name, surname, public name)</li>
+            <li>Places (birth/death locations)</li>
+            <li>Occupations</li>
+            <li>Dates and date ranges</li>
+            <li>Family relationships</li>
+        </ul>
+        <p style="margin-bottom: 0;"><strong>For now, please use the navigation menu to browse available persons.</strong></p>
+    </div>
+    {% else %}
+    <div style="padding: 40px; background-color: #f9f9f9; border-radius: 8px; text-align: center;">
+        <h2 style="color: #34495e;">Search Tips</h2>
+        <p style="color: #7f8c8d; font-size: 1.1em;">Enter a name, place, or keyword to search the database</p>
+
+        <div style="margin-top: 30px; text-align: left;">
+            <h3 style="color: #2c3e50;">Quick Examples:</h3>
+            <ul style="color: #7f8c8d; font-size: 1.05em;">
+                <li>Search by name: "Darwin" or "Ada"</li>
+                <li>Search by place: "London" or "England"</li>
+                <li>Search by occupation: "Mathematician"</li>
+            </ul>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

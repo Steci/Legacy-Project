@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block title %}Home - GeneWeb Legacy Project{% endblock %}
+
+{% block content %}
+<div style="text-align: center; padding: 40px 20px;">
+    <h1 style="color: #2c3e50; margin-bottom: 20px;">Welcome to GeneWeb Legacy Project</h1>
+
+    <p style="font-size: 1.2em; color: #7f8c8d; max-width: 800px; margin: 0 auto 30px;">
+        This is a Python translation of the GeneWeb genealogy software, originally written in OCaml.
+        The project demonstrates modern software engineering practices while maintaining functional
+        equivalence with the original system.
+    </p>
+
+    <div class="alert alert-info" style="max-width: 800px; margin: 0 auto 30px; text-align: left;">
+        <h3 style="margin-top: 0;">Project Status</h3>
+        <ul style="margin-bottom: 0;">
+            <li><strong>Core Algorithms:</strong> ✅ Complete (Consanguinity, Sosa numbering, Relationships)</li>
+            <li><strong>Data Models:</strong> ✅ Complete (Person, Family, Event, Date)</li>
+            <li><strong>File Parsers:</strong> ✅ Complete (GeneWeb .gw, GEDCOM .ged)</li>
+            <li><strong>Frontend Integration:</strong> ✅ Complete (This web interface!)</li>
+            <li><strong>Template Engine:</strong> 🚧 In Progress (Using Jinja2 for now)</li>
+            <li><strong>Display Modules:</strong> 🚧 In Progress (Person pages working)</li>
+        </ul>
+    </div>
+
+    <h2 style="color: #34495e; margin: 40px 0 20px;">Sample Persons in Database</h2>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; max-width: 900px; margin: 0 auto;">
+        {% for person_id, person in persons.items() %}
+        <div style="border: 1px solid #ddd; border-radius: 8px; padding: 20px; background-color: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+            <h3 style="margin-top: 0; color: #2c3e50;">
+                <a href="{{ url_for('person', person_id=person_id) }}" style="color: #3498db; text-decoration: none;">
+                    {{ person.first_name }} {{ person.surname }}
+                </a>
+            </h3>
+
+            <p style="color: #7f8c8d; margin: 10px 0;">
+                <strong>Sex:</strong> {{ person.sex.name if person.sex else 'Unknown' }}
+            </p>
+
+            {% if person.occupation %}
+            <p style="color: #7f8c8d; margin: 10px 0;">
+                <strong>Occupation:</strong> {{ person.occupation }}
+            </p>
+            {% endif %}
+
+            {% if person.birth and person.birth.date and person.birth.date.dmy %}
+            <p style="color: #7f8c8d; margin: 10px 0;">
+                <strong>Born:</strong> {{ person.birth.date.dmy.year }}
+                {% if person.birth.place and person.birth.place.town %}
+                in {{ person.birth.place.town }}
+                {% endif %}
+            </p>
+            {% endif %}
+
+            {% if person.death and person.death.date and person.death.date.dmy %}
+            <p style="color: #7f8c8d; margin: 10px 0;">
+                <strong>Died:</strong> {{ person.death.date.dmy.year }}
+                {% if person.death.place and person.death.place.town %}
+                in {{ person.death.place.town }}
+                {% endif %}
+            </p>
+            {% endif %}
+
+            <p style="margin-top: 15px;">
+                <a href="{{ url_for('person', person_id=person_id) }}"
+                   style="display: inline-block; padding: 8px 16px; background-color: #3498db; color: white; text-decoration: none; border-radius: 4px;">
+                    View Details
+                </a>
+            </p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <h2 style="color: #34495e; margin: 40px 0 20px;">Features</h2>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; max-width: 900px; margin: 0 auto;">
+        <div style="padding: 20px; background-color: #ecf0f1; border-radius: 8px;">
+            <h3 style="color: #2c3e50; margin-top: 0;">Person Pages</h3>
+            <p>View detailed information about individuals including birth, death, occupation, and biographical notes.</p>
+        </div>
+
+        <div style="padding: 20px; background-color: #ecf0f1; border-radius: 8px;">
+            <h3 style="color: #2c3e50; margin-top: 0;">REST API</h3>
+            <p>Access genealogy data programmatically via JSON API endpoints.</p>
+        </div>
+
+        <div style="padding: 20px; background-color: #ecf0f1; border-radius: 8px;">
+            <h3 style="color: #2c3e50; margin-top: 0;">Search</h3>
+            <p>Search for persons and families in the database (coming soon).</p>
+        </div>
+
+        <div style="padding: 20px; background-color: #ecf0f1; border-radius: 8px;">
+            <h3 style="color: #2c3e50; margin-top: 0;">Relationships</h3>
+            <p>Calculate consanguinity and cousin degrees (via backend modules).</p>
+        </div>
+    </div>
+
+    <h2 style="color: #34495e; margin: 40px 0 20px;">Quick Links</h2>
+
+    <div style="margin-top: 20px;">
+        <a href="{{ url_for('person', person_id='darwin') }}"
+           style="display: inline-block; padding: 12px 24px; margin: 10px; background-color: #3498db; color: white; text-decoration: none; border-radius: 4px; font-size: 1.1em;">
+            View Charles Darwin
+        </a>
+        <a href="{{ url_for('person', person_id='lovelace') }}"
+           style="display: inline-block; padding: 12px 24px; margin: 10px; background-color: #3498db; color: white; text-decoration: none; border-radius: 4px; font-size: 1.1em;">
+            View Ada Lovelace
+        </a>
+        <a href="{{ url_for('api_persons') }}"
+           style="display: inline-block; padding: 12px 24px; margin: 10px; background-color: #27ae60; color: white; text-decoration: none; border-radius: 4px; font-size: 1.1em;">
+            View API Data
+        </a>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+
+{% block title %}{{ public_name }} - GeneWeb Legacy Project{% endblock %}
+
+{% block content %}
+<div style="max-width: 900px; margin: 0 auto;">
+    <!-- Breadcrumb -->
+    <nav style="margin-bottom: 20px; color: #7f8c8d;">
+        <a href="{{ url_for('index') }}" style="color: #3498db; text-decoration: none;">Home</a>
+        <span> / </span>
+        <span>{{ public_name }}</span>
+    </nav>
+
+    <!-- Person Header -->
+    <div style="border-bottom: 3px solid #3498db; padding-bottom: 20px; margin-bottom: 30px;">
+        <h1 style="color: #2c3e50; margin: 0 0 10px 0;">{{ public_name }}</h1>
+        <p style="font-size: 1.2em; color: #7f8c8d; margin: 0;">
+            {{ first_name }} {{ surname }}
+        </p>
+    </div>
+
+    <!-- Main Information -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px;">
+        <!-- Left Column -->
+        <div>
+            <h2 style="color: #34495e; border-bottom: 2px solid #ecf0f1; padding-bottom: 10px;">Personal Information</h2>
+
+            <table style="width: 100%; border-collapse: collapse;">
+                <tr>
+                    <td style="padding: 10px 10px 10px 0; font-weight: bold; color: #7f8c8d; width: 40%;">First Name:</td>
+                    <td style="padding: 10px 0; color: #2c3e50;">{{ first_name }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 10px 10px 10px 0; font-weight: bold; color: #7f8c8d;">Surname:</td>
+                    <td style="padding: 10px 0; color: #2c3e50;">{{ surname }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 10px 10px 10px 0; font-weight: bold; color: #7f8c8d;">Sex:</td>
+                    <td style="padding: 10px 0; color: #2c3e50;">
+                        {% if sex == 'MALE' %}
+                        ♂ Male
+                        {% elif sex == 'FEMALE' %}
+                        ♀ Female
+                        {% else %}
+                        Unknown
+                        {% endif %}
+                    </td>
+                </tr>
+                {% if occupation %}
+                <tr>
+                    <td style="padding: 10px 10px 10px 0; font-weight: bold; color: #7f8c8d;">Occupation:</td>
+                    <td style="padding: 10px 0; color: #2c3e50;">{{ occupation }}</td>
+                </tr>
+                {% endif %}
+            </table>
+        </div>
+
+        <!-- Right Column -->
+        <div>
+            <h2 style="color: #34495e; border-bottom: 2px solid #ecf0f1; padding-bottom: 10px;">Life Events</h2>
+
+            {% if birth_date or birth_place %}
+            <div style="margin-bottom: 20px;">
+                <h3 style="color: #27ae60; font-size: 1.1em; margin: 10px 0 5px 0;">
+                    <i class="fas fa-birthday-cake"></i> Birth
+                </h3>
+                {% if birth_date %}
+                <p style="margin: 5px 0; color: #2c3e50;">
+                    <strong>Date:</strong> {{ birth_date }}
+                </p>
+                {% endif %}
+                {% if birth_place %}
+                <p style="margin: 5px 0; color: #2c3e50;">
+                    <strong>Place:</strong> {{ birth_place }}
+                </p>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            {% if death_date or death_place %}
+            <div style="margin-bottom: 20px;">
+                <h3 style="color: #e74c3c; font-size: 1.1em; margin: 10px 0 5px 0;">
+                    <i class="fas fa-cross"></i> Death
+                </h3>
+                {% if death_date %}
+                <p style="margin: 5px 0; color: #2c3e50;">
+                    <strong>Date:</strong> {{ death_date }}
+                </p>
+                {% endif %}
+                {% if death_place %}
+                <p style="margin: 5px 0; color: #2c3e50;">
+                    <strong>Place:</strong> {{ death_place }}
+                </p>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            {% if not birth_date and not birth_place and not death_date and not death_place %}
+            <p style="color: #95a5a6; font-style: italic;">No life events recorded.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Biographical Notes -->
+    {% if notes %}
+    <div style="margin-top: 30px;">
+        <h2 style="color: #34495e; border-bottom: 2px solid #ecf0f1; padding-bottom: 10px;">Biographical Notes</h2>
+        <div style="background-color: #f9f9f9; padding: 20px; border-radius: 8px; border-left: 4px solid #3498db; margin-top: 15px;">
+            <p style="color: #2c3e50; line-height: 1.6; margin: 0; white-space: pre-wrap;">{{ notes }}</p>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Additional Events -->
+    {% if events %}
+    <div style="margin-top: 30px;">
+        <h2 style="color: #34495e; border-bottom: 2px solid #ecf0f1; padding-bottom: 10px;">Other Events</h2>
+        <div style="margin-top: 15px;">
+            {% for event in events %}
+            <div style="background-color: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 10px;">
+                <h3 style="color: #3498db; font-size: 1.1em; margin: 0 0 10px 0;">{{ event.name }}</h3>
+                {% if event.date %}
+                <p style="margin: 5px 0; color: #2c3e50;">
+                    <strong>Date:</strong> {{ event.date }}
+                </p>
+                {% endif %}
+                {% if event.place %}
+                <p style="margin: 5px 0; color: #2c3e50;">
+                    <strong>Place:</strong> {{ event.place }}
+                </p>
+                {% endif %}
+                {% if event.note %}
+                <p style="margin: 10px 0 0 0; color: #7f8c8d; font-style: italic;">{{ event.note }}</p>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Actions -->
+    <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #ecf0f1; text-align: center;">
+        <a href="{{ url_for('index') }}"
+           style="display: inline-block; padding: 10px 20px; margin: 5px; background-color: #95a5a6; color: white; text-decoration: none; border-radius: 4px;">
+            ← Back to Home
+        </a>
+        <a href="{{ url_for('search') }}"
+           style="display: inline-block; padding: 10px 20px; margin: 5px; background-color: #3498db; color: white; text-decoration: none; border-radius: 4px;">
+            🔍 Search Database
+        </a>
+    </div>
+
+    <!-- Data Source Info -->
+    <div style="margin-top: 30px; padding: 15px; background-color: #ecf0f1; border-radius: 8px; color: #7f8c8d; font-size: 0.9em;">
+        <p style="margin: 0;"><strong>Note:</strong> This is sample data for demonstration purposes. The person information is loaded from the Python backend using the Legacy-Project data models (Person, Event, Date, Place classes).</p>
+    </div>
+</div>
+{% endblock %}
