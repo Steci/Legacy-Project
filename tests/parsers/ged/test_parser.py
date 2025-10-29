@@ -1,22 +1,26 @@
-import os
-import sys
+from __future__ import annotations
+
 from textwrap import dedent
+from typing import Callable
 
 import pytest
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../src")))
-
+from models.person.params import Sex
 from parsers.ged.parser import GedcomParser
-from parsers.common.base_models import Sex
 
 
-def parse_ged(text: str):
+@pytest.fixture()
+def parse_ged() -> Callable[[str], object]:
     parser = GedcomParser()
-    return parser.parse_content(text)
+
+    def _parse(text: str) -> object:
+        return parser.parse_content(text)
+
+    return _parse
 
 
 class TestHeaderParsing:
-    def test_header_fields_and_notes_db(self):
+    def test_header_fields_and_notes_db(self, parse_ged: Callable[[str], object]) -> None:
         ged_text = dedent(
             """\
             0 HEAD
@@ -39,7 +43,7 @@ class TestHeaderParsing:
 
 
 class TestIndividualParsing:
-    def test_individual_events_and_notes(self):
+    def test_individual_events_and_notes(self, parse_ged: Callable[[str], object]) -> None:
         ged_text = dedent(
             """\
             0 HEAD
@@ -66,26 +70,26 @@ class TestIndividualParsing:
         database = parse_ged(ged_text)
         person = database.individuals["@I1@"]
 
-        assert person.name.first_name == "John"
-        assert person.name.surname == "Doe"
+        assert person.first_name == "John"
+        assert person.surname == "Doe"
         assert person.sex is Sex.MALE
 
-        assert person.birth and person.birth.date.year == 1980
-        assert person.birth.date.month == 1
-        assert person.birth.date.day == 1
-        assert person.birth.place == "Exampletown"
+        assert person.birth and person.birth.date and person.birth.date.dmy.year == 1980
+        assert person.birth.date.dmy.month == 1
+        assert person.birth.date.dmy.day == 1
+        assert person.birth.place and person.birth.place.other == "Exampletown"
 
-        assert person.baptism and person.baptism.date.month == 2
-        assert person.baptism.place == "Examplechurch"
+        assert person.baptism and person.baptism.date and person.baptism.date.dmy.month == 2
+        assert person.baptism.place and person.baptism.place.other == "Examplechurch"
 
-        assert person.death and person.death.date.year == 2010
-        assert person.death.place == "Exampletown"
+        assert person.death and person.death.date and person.death.date.dmy.year == 2010
+        assert person.death.place and person.death.place.other == "Exampletown"
 
-        assert person.note == "First line<br>\ncontinues here"
+        assert person.notes == "First line<br>\ncontinues here"
 
 
 class TestFamilyParsing:
-    def test_family_members_events_and_notes(self):
+    def test_family_members_events_and_notes(self, parse_ged: Callable[[str], object]) -> None:
         ged_text = dedent(
             """\
             0 HEAD
@@ -123,19 +127,19 @@ class TestFamilyParsing:
         assert family.wife_id == "@I2@"
         assert family.children_ids == ["@I3@"]
 
-        assert family.marriage and family.marriage.date.year == 2000
-        assert family.marriage.date.month == 12
-        assert family.marriage.date.day == 12
-        assert family.marriage.place == "Some Place"
+        assert family.marriage and family.marriage.date and family.marriage.date.dmy.year == 2000
+        assert family.marriage.date.dmy.month == 12
+        assert family.marriage.date.dmy.day == 12
+        assert family.marriage.place and family.marriage.place.other == "Some Place"
 
-        assert family.note == "Family line<br>\nMore details"
+        assert family.notes == "Family line<br>\nMore details"
 
         child = database.individuals["@I3@"]
-        assert child.source == "Child Source"
+        assert child.psources == "Child Source"
 
 
 class TestNoteAndSourceAggregation:
-    def test_person_note_reference_and_sources(self):
+    def test_person_note_reference_and_sources(self, parse_ged: Callable[[str], object]) -> None:
         ged_text = dedent(
             """\
             0 HEAD
@@ -161,15 +165,15 @@ class TestNoteAndSourceAggregation:
         database = parse_ged(ged_text)
         person = database.individuals["@I1@"]
 
-        assert person.source == "Main Source"
-        assert "Referenced note line" in person.note
-        assert "Inline section<br>" in person.note
-        assert "continues" in person.note
-        assert "Source note line" in person.note
+        assert person.psources == "Main Source"
+        assert "Referenced note line" in (person.notes or "")
+        assert "Inline section<br>" in (person.notes or "")
+        assert "continues" in (person.notes or "")
+        assert "Source note line" in (person.notes or "")
 
 
 class TestAliasesAndRelationships:
-    def test_aliases_occupations_and_family_links(self):
+    def test_aliases_occupations_and_family_links(self, parse_ged: Callable[[str], object]) -> None:
         ged_text = dedent(
             """\
             0 HEAD
@@ -188,7 +192,7 @@ class TestAliasesAndRelationships:
         database = parse_ged(ged_text)
         person = database.individuals["@I1@"]
 
-        assert person.name.first_name == "Primary"
+        assert person.first_name == "Primary"
         assert person.aliases == ["Alias /Name/"]
         assert person.occupation == "Carpenter, Farmer"
         assert person.families_as_spouse == ["@F1@"]
@@ -196,7 +200,7 @@ class TestAliasesAndRelationships:
 
 
 class TestSpecialRelationships:
-    def test_adoption_and_witnesses(self):
+    def test_adoption_and_witnesses(self, parse_ged: Callable[[str], object]) -> None:
         ged_text = dedent(
             """\
             0 HEAD
@@ -261,7 +265,7 @@ class TestSpecialRelationships:
 
 
 class TestFamilyEventHandling:
-    def test_divorce_sets_relation_and_custom_events(self):
+    def test_divorce_sets_relation_and_custom_events(self, parse_ged: Callable[[str], object]) -> None:
         ged_text = dedent(
             """\
             0 HEAD
@@ -297,24 +301,24 @@ class TestFamilyEventHandling:
         database = parse_ged(ged_text)
 
         family = database.families["@F1@"]
-        assert family.divorce and family.divorce.date.year == 2003
-        assert family.divorce.place == "County Court"
-        assert family.divorce.event_type == "DIV"
+        assert family.divorce and family.divorce.date and family.divorce.date.dmy.year == 2003
+        assert family.divorce.place and family.divorce.place.other == "County Court"
+        assert family.divorce.name.upper() == "DIV"
         assert any(
             witness["witness"] == "@I3@" and witness["event"] == "DIV"
             for witness in family.witnesses
         )
 
         court_event = next(
-            evt for evt in family.events if (evt.event_type or "").upper() == "COURT"
+            evt for evt in family.events if (evt.name or "").upper() == "COURT"
         )
         assert "Trial Details" in (court_event.note or "")
         assert "Hearing note" in (court_event.note or "")
-        assert "Divorce Records" in (court_event.source_notes or "")
+        assert "Divorce Records" in (getattr(court_event, "source_notes", "") or "")
 
 
 class TestPersonalEventVariants:
-    def test_residence_flag_and_custom_event_type(self):
+    def test_residence_flag_and_custom_event_type(self, parse_ged: Callable[[str], object]) -> None:
         ged_text = dedent(
             """\
             0 HEAD
@@ -338,15 +342,14 @@ class TestPersonalEventVariants:
         person = database.individuals["@I1@"]
 
         residence_event = next(
-            evt for evt in person.events if (evt.event_type or "") == "RESI"
+            evt for evt in person.events if (evt.name or "") == "RESI"
         )
         assert residence_event and (residence_event.note or "") == ""
 
         custom_event = next(
-            evt for evt in person.events if (evt.event_type or "") == "Military Service"
+            evt for evt in person.events if (evt.name or "") == "Military Service"
         )
-        assert custom_event.place == "Fort Base"
-        assert custom_event.date and custom_event.date.year == 1990
-        assert "Military Service Files" in (custom_event.source_notes or "")
+        assert custom_event.place and custom_event.place.other == "Fort Base"
+        assert custom_event.date and custom_event.date.dmy.year == 1990
+        assert "Military Service Files" in (getattr(custom_event, "source_notes", "") or "")
         assert "Served overseas" in (custom_event.note or "")
-

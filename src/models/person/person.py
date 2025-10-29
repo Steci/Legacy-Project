@@ -5,8 +5,8 @@ from dataclasses import dataclass, field
 from datetime import datetime
 import json
 
-from models.event import Event
-from models.date import Date
+from ..event import Event
+from ..date import Date
 from .params import Sex, Title, Relation, PEventType
 
 @dataclass
@@ -40,6 +40,9 @@ class Person:
     psources: Optional[str] = None
     access: Optional[str] = None  # e.g., "public", "private"
     key_index: Optional[int] = None  # Unique identifier for the person
+    consanguinity: float = 0.0
+    consanguinity_issue: Optional[str] = None
+    consanguinity_known: bool = False
 
     def __post_init__(self):
         """Post-initialization validation and setup"""
@@ -359,7 +362,7 @@ class Person:
     def create_birth_event(self, date: Optional[Date] = None, place: Optional[str] = None, 
                           note: Optional[str] = None, source: Optional[str] = None) -> Event:
         """Create a birth event"""
-        from event import Place
+        from ..event import Place
         place_obj = Place(other=place) if place else None
         event = Event(name=PEventType.BIRTH.value, date=date, place=place_obj, 
                      note=note, source=source)
@@ -369,7 +372,7 @@ class Person:
     def create_baptism_event(self, date: Optional[Date] = None, place: Optional[str] = None,
                            note: Optional[str] = None, source: Optional[str] = None) -> Event:
         """Create a baptism event"""
-        from event import Place
+        from ..event import Place
         place_obj = Place(other=place) if place else None
         event = Event(name=PEventType.BAPTISM.value, date=date, place=place_obj,
                      note=note, source=source)
@@ -379,7 +382,7 @@ class Person:
     def create_death_event(self, date: Optional[Date] = None, place: Optional[str] = None,
                           note: Optional[str] = None, source: Optional[str] = None) -> Event:
         """Create a death event"""
-        from event import Place
+        from ..event import Place
         place_obj = Place(other=place) if place else None
         event = Event(name=PEventType.DEATH.value, date=date, place=place_obj,
                      note=note, source=source)
@@ -389,7 +392,7 @@ class Person:
     def create_burial_event(self, date: Optional[Date] = None, place: Optional[str] = None,
                            note: Optional[str] = None, source: Optional[str] = None) -> Event:
         """Create a burial event"""
-        from event import Place
+        from ..event import Place
         place_obj = Place(other=place) if place else None
         event = Event(name=PEventType.BURIAL.value, date=date, place=place_obj,
                      note=note, source=source)
@@ -722,7 +725,7 @@ class Person:
             if event_data.get('date'):
                 date_data = event_data['date']
                 if date_data.get('dmy'):
-                    from date import DMY, Precision, Calendar
+                    from ..date import DMY, Precision, Calendar
                     dmy_data = date_data['dmy']
                     dmy = DMY(
                         day=dmy_data.get('day', 0),
@@ -740,7 +743,7 @@ class Person:
             # Reconstruct place
             place_obj = None
             if event_data.get('place'):
-                from event import Place
+                from ..event import Place
                 place_data = event_data['place']
                 place_obj = Place(
                     country=place_data.get('country', ''),
@@ -756,7 +759,7 @@ class Person:
             # Reconstruct witnesses
             witnesses = []
             if event_data.get('witnesses'):
-                from event import Witness, WitnessType
+                from ..event import Witness, WitnessType
                 for w_data in event_data['witnesses']:
                     witness = Witness(
                         key_index=w_data.get('key_index', 0),

@@ -2,8 +2,7 @@
 Calendar utilities for GEDCOM date parsing.
 Extracted from parser to reduce cyclomatic complexity while preserving OCaml compatibility.
 """
-from typing import Dict, Tuple, Optional
-from ..common.base_models import BaseDate, DatePrecision
+from typing import Tuple
 
 
 class CalendarUtils:
@@ -213,35 +212,3 @@ class CalendarUtils:
         
         return day, month, approx_gregorian_year
     
-    @staticmethod
-    def recover_date_calendar(date: BaseDate, target_calendar: str) -> BaseDate:
-        """Convert date between calendar systems."""
-        if not date or date.calendar == target_calendar:
-            return date
-            
-        converted_date = BaseDate()
-        converted_date.text = date.text
-        converted_date.precision = date.precision
-        converted_date.calendar = target_calendar
-        
-        try:
-            if date.calendar == "JULIAN" and target_calendar == "GREGORIAN":
-                day, month, year = CalendarUtils.julian_to_gregorian(date.day, date.month, date.year)
-            elif date.calendar == "GREGORIAN" and target_calendar == "JULIAN":
-                day, month, year = CalendarUtils.gregorian_to_julian(date.day, date.month, date.year)
-            elif date.calendar == "FRENCH" and target_calendar == "GREGORIAN":
-                day, month, year = CalendarUtils.french_republican_to_gregorian(date.day, date.month, date.year)
-            elif date.calendar == "HEBREW" and target_calendar == "GREGORIAN":
-                day, month, year = CalendarUtils.hebrew_to_gregorian(date.day, date.month, date.year)
-            else:
-                # Unsupported conversion
-                return date
-                
-            converted_date.day = day
-            converted_date.month = month
-            converted_date.year = year
-            return converted_date
-            
-        except Exception:
-            # If conversion fails, return original
-            return date
