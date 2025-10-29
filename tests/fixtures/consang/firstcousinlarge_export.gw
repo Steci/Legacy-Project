@@ -1,0 +1,35 @@
+encoding: utf-8
+gwplus
+
+fam Ancestor John 0 + Ancestor Jane 0
+fevt
+#marr 
+end fevt
+beg
+- h Parent Alex
+- f Parent Beth
+end
+
+fam Parent Alex 0 + Partner Alice 0
+fevt
+#marr 
+end fevt
+beg
+- h Cousin Adam
+end
+
+fam Parent Beth 0 + Partner Brian 0
+fevt
+#marr 
+end fevt
+beg
+- f Cousin Bella
+end
+
+fam Cousin Adam 0 + Cousin Bella 0
+fevt
+#marr 
+end fevt
+beg
+- h Child Charles
+end

@@ -1,0 +1,81 @@
+[
+  {
+    "name": "self",
+    "person_a": "Pat",
+    "person_b": "Pat",
+    "ancestors": [
+      {"name": "Pat", "length_a": 0, "length_b": 0}
+    ],
+    "expected_kind": "SELF",
+    "expected_description": "same person"
+  },
+  {
+    "name": "siblings",
+    "person_a": "Alice",
+    "person_b": "Bob",
+    "ancestors": [
+      {"name": "Parent", "length_a": 1, "length_b": 1}
+    ],
+    "expected_kind": "SIBLING",
+    "expected_description": "siblings"
+  },
+  {
+    "name": "half_siblings",
+    "person_a": "Hannah",
+    "person_b": "Ian",
+    "ancestors": [
+      {"name": "Shared Parent", "length_a": 1, "length_b": 1}
+    ],
+    "expected_kind": "SIBLING",
+    "expected_description": "siblings"
+  },
+  {
+    "name": "first_cousins",
+    "person_a": "Charlie",
+    "person_b": "Dana",
+    "ancestors": [
+      {"name": "Grandparent", "length_a": 2, "length_b": 2}
+    ],
+    "expected_kind": "COUSIN",
+    "expected_description": "first cousins"
+  },
+  {
+    "name": "once_removed",
+    "person_a": "Evan",
+    "person_b": "Fran",
+    "ancestors": [
+      {"name": "Grandparent", "length_a": 2, "length_b": 3}
+    ],
+    "expected_kind": "COUSIN",
+    "expected_description": "first cousins once removed"
+  },
+  {
+    "name": "multiple_ancestors_selects_closest",
+    "person_a": "Jade",
+    "person_b": "Kyle",
+    "ancestors": [
+      {"name": "Closer Ancestor", "length_a": 2, "length_b": 3},
+      {"name": "Distant Ancestor", "length_a": 4, "length_b": 4}
+    ],
+    "expected_kind": "COUSIN",
+    "expected_description": "first cousins once removed"
+  },
+  {
+    "name": "direct_ancestor",
+    "person_a": "Greg",
+    "person_b": "Henry",
+    "ancestors": [
+      {"name": "Greg", "length_a": 0, "length_b": 2}
+    ],
+    "expected_kind": "DIRECT_ANCESTOR",
+    "expected_description": "ancestor/descendant (2 generations)"
+  },
+  {
+    "name": "unrelated",
+    "person_a": "Iris",
+    "person_b": "Jon",
+    "ancestors": [],
+    "expected_kind": "UNRELATED",
+    "expected_description": "unrelated"
+  }
+]

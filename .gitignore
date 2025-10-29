@@ -208,3 +208,14 @@ __marimo__/
 
 # GitHub Copilot files
 .devcontainer/
+comparison_output/
+
+# GeneWeb tool artifacts
+*.gwo
+*.gwf
+*.lck
+*.gwb/
+
+# Project planning scratch files
+PLAN.md
+**/PLAN.md
