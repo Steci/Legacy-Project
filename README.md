@@ -99,24 +99,34 @@ export PYTHONPATH=src
 
 ```
 Legacy-Project/
-│
-├── src/
-│   ├── __main__.py          # Entry point of the project
-│   ├── database/            # Storage management and persistence layer
-│   ├── parser/              # Geneweb file parsing and data migration
-│   ├── ui/                  # CLI or GUI modules (if applicable)
-│   └── tests/               # Unit and integration tests
-│
 ├── docs/
-│   ├── images/
-│   └── conventionnalCommit.md
-│
-├── data/
-│   └── legacy.db            # Example database file (auto-generated)
-│
-├── pyproject.toml / requirements.txt
+├── examples_files/
 ├── LICENSE
-└── README.md
+├── README.md
+├── requirements.txt
+├── src/
+│   ├── consang/
+│   │   ├── cousin_degree/
+│   ├── models/
+│   │   ├── family/
+│   │   └── person/
+│   ├── parsers/
+│   │   ├── ged/
+│   │   │   └── mixins/
+│   │   ├── gw/
+│   └── sosa/
+├── tests/
+│   ├── consang/
+│   ├── fixtures/
+│   │   ├── consang/
+│   │   │   ├── cousin_degrees/
+│   │   │   ├── full/
+│   │   └── sosa/
+│   ├── parsers/
+│   │   ├── ged/
+│   │   └── gw/
+│   └── sosa/
+└── tools/
 ```
 
 ---
