@@ -3,50 +3,235 @@
 {% block title %}Search - GeneWeb Legacy Project{% endblock %}
 
 {% block content %}
-<div style="max-width: 800px; margin: 0 auto;">
-    <h1 style="color: #2c3e50; margin-bottom: 30px;">Search Database</h1>
+<div style="max-width: 1100px; margin: 0 auto;">
+    <!-- Breadcrumb -->
+    <nav style="margin-bottom: 25px; color: #7f8c8d; font-size: 0.95em;">
+        <a href="{{ url_for('index') }}" style="color: #667eea; text-decoration: none; font-weight: 500;">🏠 Home</a>
+        <span style="margin: 0 8px;">›</span>
+        <span style="color: #2c3e50; font-weight: 600;">Search</span>
+    </nav>
 
-    <form method="GET" action="{{ url_for('search') }}" style="margin-bottom: 40px;">
-        <div style="display: flex; gap: 10px;">
+    <!-- Search Header -->
+    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px; border-radius: 12px; margin-bottom: 30px; color: white; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+        <h1 style="margin: 0 0 15px 0; font-size: 2.3em; font-weight: 600;">🔍 Search Database</h1>
+        <p style="margin: 0; font-size: 1.1em; opacity: 0.95;">Find persons and families by name, place, occupation, or other keywords</p>
+    </div>
+
+    <!-- Search Form -->
+    <form method="GET" action="{{ url_for('search') }}" style="margin-bottom: 35px;">
+        <div style="display: flex; gap: 12px; background-color: white; padding: 8px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
             <input type="text"
                    name="q"
                    value="{{ query }}"
                    placeholder="Search for persons, families, places..."
-                   style="flex: 1; padding: 12px; font-size: 1.1em; border: 2px solid #3498db; border-radius: 4px;">
+                   style="flex: 1; padding: 16px 20px; font-size: 1.1em; border: 2px solid #e0e0e0; border-radius: 8px; outline: none; transition: border-color 0.2s;"
+                   autofocus
+                   onfocus="this.style.borderColor='#667eea'"
+                   onblur="this.style.borderColor='#e0e0e0'">
             <button type="submit"
-                    style="padding: 12px 30px; background-color: #3498db; color: white; border: none; border-radius: 4px; font-size: 1.1em; cursor: pointer;">
+                    style="padding: 16px 35px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; font-size: 1.1em; font-weight: 600; cursor: pointer; transition: opacity 0.2s;">
                 Search
             </button>
         </div>
     </form>
 
     {% if query %}
-    <div class="alert alert-info">
-        <h3 style="margin-top: 0;">Search Results for "{{ query }}"</h3>
-        <p>Search functionality is under development. This feature will allow you to search through:</p>
-        <ul>
-            <li>Person names (first name, surname, public name)</li>
-            <li>Places (birth/death locations)</li>
-            <li>Occupations</li>
-            <li>Dates and date ranges</li>
-            <li>Family relationships</li>
-        </ul>
-        <p style="margin-bottom: 0;"><strong>For now, please use the navigation menu to browse available persons.</strong></p>
+    <!-- Results Summary -->
+    <div style="background-color: white; padding: 25px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 30px;">
+        <h2 style="color: #2c3e50; margin: 0 0 12px 0; font-size: 1.6em;">
+            Search Results for "{{ query }}"
+        </h2>
+        <p style="color: #7f8c8d; font-size: 1.05em; margin: 0;">
+            Found <strong style="color: #667eea;">{{ results|length }}</strong> person(s) and <strong style="color: #f093fb;">{{ family_results|length }}</strong> family/families
+        </p>
+    </div>
+
+    <!-- Person Results -->
+    {% if results %}
+    <div style="margin-bottom: 40px;">
+        <h3 style="color: #667eea; font-size: 1.5em; margin: 0 0 20px 0; display: flex; align-items: center; gap: 10px;">
+            👤 Persons
+            <span style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.65em; font-weight: 600;">{{ results|length }}</span>
+        </h3>
+        <div style="display: grid; gap: 18px;">
+            {% for person_id, person in results %}
+            <div style="background-color: white; border-radius: 12px; padding: 25px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); transition: transform 0.2s, box-shadow 0.2s; border-left: 4px solid #667eea;">
+                <div style="display: flex; justify-content: space-between; align-items: start;">
+                    <div style="flex: 1;">
+                        <h4 style="margin: 0 0 12px 0; color: #2c3e50;">
+                            <a href="{{ url_for('person', person_id=person_id) }}" style="color: #667eea; text-decoration: none; font-size: 1.3em; font-weight: 600;">
+                                {{ person.first_name }} {{ person.surname }}
+                            </a>
+                        </h4>
+
+                        <div style="display: flex; flex-wrap: wrap; gap: 15px; margin-top: 10px;">
+                            {% if person.sex %}
+                            <span style="color: #7f8c8d;">
+                                <strong>Sex:</strong>
+                                {% if person.sex.name == 'MALE' %}♂ Male
+                                {% elif person.sex.name == 'FEMALE' %}♀ Female
+                                {% else %}Unknown{% endif %}
+                            </span>
+                            {% endif %}
+
+                            {% if person.occupation %}
+                            <span style="color: #7f8c8d;">
+                                <strong>Occupation:</strong> {{ person.occupation }}
+                            </span>
+                            {% endif %}
+
+                            {% if person.birth and person.birth.date and person.birth.date.dmy and person.birth.date.dmy.year %}
+                            <span style="color: #7f8c8d;">
+                                <strong>Born:</strong> {{ person.birth.date.dmy.year }}
+                            </span>
+                            {% endif %}
+
+                            {% if person.death and person.death.date and person.death.date.dmy and person.death.date.dmy.year %}
+                            <span style="color: #7f8c8d;">
+                                <strong>Died:</strong> {{ person.death.date.dmy.year }}
+                            </span>
+                            {% endif %}
+                        </div>
+
+                        {% if person.birth and person.birth.place %}
+                        <p style="color: #95a5a6; margin: 10px 0 0 0; font-size: 0.95em;">
+                            📍
+                            {% if person.birth.place.town %}{{ person.birth.place.town }}{% endif %}
+                            {% if person.birth.place.county %}, {{ person.birth.place.county }}{% endif %}
+                            {% if person.birth.place.country %}, {{ person.birth.place.country }}{% endif %}
+                        </p>
+                        {% endif %}
+                    </div>
+
+                    <a href="{{ url_for('person', person_id=person_id) }}"
+                       style="display: inline-block; padding: 8px 16px; background-color: #3498db; color: white; text-decoration: none; border-radius: 4px; white-space: nowrap;">
+                        View Details
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
     </div>
     {% else %}
-    <div style="padding: 40px; background-color: #f9f9f9; border-radius: 8px; text-align: center;">
-        <h2 style="color: #34495e;">Search Tips</h2>
-        <p style="color: #7f8c8d; font-size: 1.1em;">Enter a name, place, or keyword to search the database</p>
+    <div style="padding: 30px; background-color: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; margin-bottom: 30px;">
+        <p style="margin: 0; color: #856404;">
+            <strong>No persons found</strong> matching "{{ query }}"
+        </p>
+    </div>
+    {% endif %}
 
-        <div style="margin-top: 30px; text-align: left;">
-            <h3 style="color: #2c3e50;">Quick Examples:</h3>
-            <ul style="color: #7f8c8d; font-size: 1.05em;">
-                <li>Search by name: "Darwin" or "Ada"</li>
-                <li>Search by place: "London" or "England"</li>
-                <li>Search by occupation: "Mathematician"</li>
-            </ul>
+    <!-- Family Results -->
+    {% if family_results %}
+    <div style="margin-bottom: 40px;">
+        <h3 style="color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; margin-bottom: 20px;">
+            👨‍👩‍👧‍👦 Families ({{ family_results|length }})
+        </h3>
+        <div style="display: grid; gap: 15px;">
+            {% for family_id, family in family_results %}
+            <div style="border: 1px solid #ddd; border-radius: 8px; padding: 20px; background-color: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                <div style="display: flex; justify-content: space-between; align-items: start;">
+                    <div style="flex: 1;">
+                        <h4 style="margin: 0 0 10px 0; color: #2c3e50; font-size: 1.2em;">
+                            Family
+                        </h4>
+
+                        <div style="margin-top: 10px;">
+                            {% if family.husband %}
+                            <p style="color: #7f8c8d; margin: 5px 0;">
+                                <strong>Husband:</strong> {{ family.husband }}
+                            </p>
+                            {% endif %}
+
+                            {% if family.wife %}
+                            <p style="color: #7f8c8d; margin: 5px 0;">
+                                <strong>Wife:</strong> {{ family.wife }}
+                            </p>
+                            {% endif %}
+
+                            {% if family.children %}
+                            <p style="color: #7f8c8d; margin: 5px 0;">
+                                <strong>Children:</strong> {{ family.children|length }}
+                            </p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <a href="{{ url_for('family', family_id=family_id) }}"
+                       style="display: inline-block; padding: 8px 16px; background-color: #3498db; color: white; text-decoration: none; border-radius: 4px; white-space: nowrap;">
+                        View Family
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% else %}
+    <!-- Search Tips -->
+    <div style="background-color: white; padding: 45px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); text-align: center;">
+        <div style="font-size: 3.5em; margin-bottom: 20px;">🔍</div>
+        <h2 style="color: #2c3e50; font-size: 1.8em; margin-bottom: 15px;">Search Tips</h2>
+        <p style="color: #7f8c8d; font-size: 1.15em; margin-bottom: 35px;">
+            Enter a name, place, or keyword to search the database
+        </p>
+
+        <div style="text-align: left; max-width: 650px; margin: 0 auto 35px auto;">
+            <h3 style="color: #667eea; font-size: 1.3em; margin-bottom: 20px;">Quick Examples:</h3>
+            <div style="display: grid; gap: 12px;">
+                <div style="display: flex; align-items: center; gap: 12px; padding: 15px; background-color: #f8f9fa; border-radius: 8px; border-left: 4px solid #667eea;">
+                    <span style="font-size: 1.3em;">👤</span>
+                    <div>
+                        <div style="color: #2c3e50; font-weight: 600;">Search by surname</div>
+                        <div style="color: #7f8c8d; font-size: 0.95em;">Example: "Galichet"</div>
+                    </div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 12px; padding: 15px; background-color: #f8f9fa; border-radius: 8px; border-left: 4px solid #f093fb;">
+                    <span style="font-size: 1.3em;">✍️</span>
+                    <div>
+                        <div style="color: #2c3e50; font-weight: 600;">Search by first name</div>
+                        <div style="color: #7f8c8d; font-size: 0.95em;">Example: "Jean"</div>
+                    </div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 12px; padding: 15px; background-color: #f8f9fa; border-radius: 8px; border-left: 4px solid #4facfe;">
+                    <span style="font-size: 1.3em;">📍</span>
+                    <div>
+                        <div style="color: #2c3e50; font-weight: 600;">Search by place</div>
+                        <div style="color: #7f8c8d; font-size: 0.95em;">Example: "Paris" or "France"</div>
+                    </div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 12px; padding: 15px; background-color: #f8f9fa; border-radius: 8px; border-left: 4px solid #43e97b;">
+                    <span style="font-size: 1.3em;">💼</span>
+                    <div>
+                        <div style="color: #2c3e50; font-weight: 600;">Search by occupation</div>
+                        <div style="color: #7f8c8d; font-size: 0.95em;">Example: "Marchand"</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div style="padding: 20px; background-color: #f0f8ff; border-radius: 8px; border-left: 4px solid #667eea;">
+            <p style="color: #667eea; margin: 0; font-size: 1.05em;">
+                💡 <strong>Tip:</strong> Search is case-insensitive and matches partial words
+            </p>
         </div>
     </div>
     {% endif %}
 </div>
+
+<style>
+    button[type="submit"]:hover {
+        opacity: 0.9;
+    }
+
+    div[style*="border-left: 4px solid #667eea"]:hover,
+    div[style*="border-left: 4px solid #f093fb"]:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 12px rgba(0,0,0,0.15) !important;
+    }
+
+    a[style*="color: #667eea"]:hover {
+        text-decoration: underline !important;
+    }
+</style>
 {% endblock %}

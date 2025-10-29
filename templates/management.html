@@ -1,0 +1,283 @@
+{% extends "base.html" %}
+
+{% block title %}Management - GeneWeb Legacy Project{% endblock %}
+
+{% block content %}
+<div style="max-width: 1200px; margin: 0 auto;">
+    <!-- Breadcrumb -->
+    <nav style="margin-bottom: 25px; color: #7f8c8d; font-size: 0.95em;">
+        <a href="{{ url_for('index') }}" style="color: #667eea; text-decoration: none; font-weight: 500;">🏠 Home</a>
+        <span style="margin: 0 8px;">›</span>
+        <span style="color: #2c3e50; font-weight: 600;">Management</span>
+    </nav>
+
+    <!-- Page Header -->
+    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px; border-radius: 12px; margin-bottom: 35px; color: white; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <div style="font-size: 3em;">⚙️</div>
+            <div>
+                <h1 style="margin: 0 0 8px 0; font-size: 2.3em; font-weight: 600;">Database Management</h1>
+                <p style="margin: 0; font-size: 1.1em; opacity: 0.95;">Manage, configure, and maintain your GeneWeb database</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Management and Creation Section -->
+    <div style="background-color: white; padding: 35px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 30px;">
+        <h2 style="color: #667eea; margin: 0 0 25px 0; font-size: 1.8em; display: flex; align-items: center; gap: 10px;">
+            📂 Management and Creation
+        </h2>
+
+        <!-- Consult Section -->
+        <div style="margin-bottom: 35px;">
+            <h3 style="color: #2c3e50; font-size: 1.3em; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 1.2em;">👁️</span> Consult
+            </h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px;">
+                <button style="padding: 16px 20px; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; border: none; border-radius: 10px; font-size: 1.05em; font-weight: 600; cursor: pointer; transition: opacity 0.2s; text-align: left; display: flex; align-items: center; gap: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <span style="font-size: 1.5em;">🌳</span>
+                    <div>
+                        <div>Family Trees</div>
+                        <div style="font-size: 0.85em; font-weight: 400; opacity: 0.9;">View all family trees (list)</div>
+                    </div>
+                </button>
+                <button style="padding: 16px 20px; background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: white; border: none; border-radius: 10px; font-size: 1.05em; font-weight: 600; cursor: pointer; transition: opacity 0.2s; text-align: left; display: flex; align-items: center; gap: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <span style="font-size: 1.5em;">⚠️</span>
+                    <div>
+                        <div>Error History</div>
+                        <div style="font-size: 0.85em; font-weight: 400; opacity: 0.9;">View errors and statistics</div>
+                    </div>
+                </button>
+            </div>
+        </div>
+
+        <!-- Save Section -->
+        <div style="margin-bottom: 35px;">
+            <h3 style="color: #2c3e50; font-size: 1.3em; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 1.2em;">💾</span> Save
+            </h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px;">
+                <button style="padding: 16px 20px; background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white; border: none; border-radius: 10px; font-size: 1.05em; font-weight: 600; cursor: pointer; transition: opacity 0.2s; text-align: left; display: flex; align-items: center; gap: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <span style="font-size: 1.5em;">📄</span>
+                    <div>
+                        <div>GEDCOM Export</div>
+                        <div style="font-size: 0.85em; font-weight: 400; opacity: 0.9;">Save as GEDCOM file (gwb2ged)</div>
+                    </div>
+                </button>
+                <button style="padding: 16px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 10px; font-size: 1.05em; font-weight: 600; cursor: pointer; transition: opacity 0.2s; text-align: left; display: flex; align-items: center; gap: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <span style="font-size: 1.5em;">📦</span>
+                    <div>
+                        <div>GeneWeb Export</div>
+                        <div style="font-size: 0.85em; font-weight: 400; opacity: 0.9;">Save as GeneWeb file (gwu)</div>
+                    </div>
+                </button>
+            </div>
+        </div>
+
+        <!-- Create Family Tree Section -->
+        <div>
+            <h3 style="color: #2c3e50; font-size: 1.3em; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 1.2em;">➕</span> Create Family Tree
+            </h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px;">
+                <button style="padding: 16px 20px; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; border: none; border-radius: 10px; font-size: 1.05em; font-weight: 600; cursor: pointer; transition: opacity 0.2s; text-align: left; display: flex; align-items: center; gap: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <span style="font-size: 1.5em;">📥</span>
+                    <div>
+                        <div>From GEDCOM</div>
+                        <div style="font-size: 0.85em; font-weight: 400; opacity: 0.9;">Import from GEDCOM file (ged2gwb)</div>
+                    </div>
+                </button>
+                <button style="padding: 16px 20px; background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%); color: #2c3e50; border: none; border-radius: 10px; font-size: 1.05em; font-weight: 600; cursor: pointer; transition: opacity 0.2s; text-align: left; display: flex; align-items: center; gap: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <span style="font-size: 1.5em;">📦</span>
+                    <div>
+                        <div>From GeneWeb File</div>
+                        <div style="font-size: 0.85em; font-weight: 400; opacity: 0.8;">Import from .gw file (gwc)</div>
+                    </div>
+                </button>
+                <button style="padding: 16px 20px; background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); color: #2c3e50; border: none; border-radius: 10px; font-size: 1.05em; font-weight: 600; cursor: pointer; transition: opacity 0.2s; text-align: left; display: flex; align-items: center; gap: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <span style="font-size: 1.5em;">✨</span>
+                    <div>
+                        <div>From Empty File</div>
+                        <div style="font-size: 0.85em; font-weight: 400; opacity: 0.8;">Create new database (gwc)</div>
+                    </div>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Advanced Options Section -->
+    <div style="background-color: white; padding: 35px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 30px;">
+        <h2 style="color: #f093fb; margin: 0 0 25px 0; font-size: 1.8em; display: flex; align-items: center; gap: 10px;">
+            🔧 Advanced Options
+        </h2>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px;">
+            <button style="padding: 16px 20px; background-color: #f8f9fa; color: #2c3e50; border: 2px solid #667eea; border-radius: 10px; font-size: 1.05em; font-weight: 600; cursor: pointer; transition: all 0.2s; text-align: left; display: flex; align-items: center; gap: 12px;">
+                <span style="font-size: 1.5em;">🧹</span>
+                <div>
+                    <div>Clean Up</div>
+                    <div style="font-size: 0.85em; font-weight: 400; color: #7f8c8d;">Remove unused data (cleanup)</div>
+                </div>
+            </button>
+
+            <button style="padding: 16px 20px; background-color: #f8f9fa; color: #2c3e50; border: 2px solid #4facfe; border-radius: 10px; font-size: 1.05em; font-weight: 600; cursor: pointer; transition: all 0.2s; text-align: left; display: flex; align-items: center; gap: 12px;">
+                <span style="font-size: 1.5em;">✏️</span>
+                <div>
+                    <div>Renaming</div>
+                    <div style="font-size: 0.85em; font-weight: 400; color: #7f8c8d;">Rename database or entries (rename)</div>
+                </div>
+            </button>
+
+            <button style="padding: 16px 20px; background-color: #f8f9fa; color: #2c3e50; border: 2px solid #fa709a; border-radius: 10px; font-size: 1.05em; font-weight: 600; cursor: pointer; transition: all 0.2s; text-align: left; display: flex; align-items: center; gap: 12px;">
+                <span style="font-size: 1.5em;">🗑️</span>
+                <div>
+                    <div>Deletion</div>
+                    <div style="font-size: 0.85em; font-weight: 400; color: #7f8c8d;">Delete entries or databases (delete)</div>
+                </div>
+            </button>
+
+            <button style="padding: 16px 20px; background-color: #f8f9fa; color: #2c3e50; border: 2px solid #43e97b; border-radius: 10px; font-size: 1.05em; font-weight: 600; cursor: pointer; transition: all 0.2s; text-align: left; display: flex; align-items: center; gap: 12px;">
+                <span style="font-size: 1.5em;">🔀</span>
+                <div>
+                    <div>Merging</div>
+                    <div style="font-size: 0.85em; font-weight: 400; color: #7f8c8d;">Merge with other databases (merge)</div>
+                </div>
+            </button>
+
+            <button style="padding: 16px 20px; background-color: #f8f9fa; color: #2c3e50; border: 2px solid #feca57; border-radius: 10px; font-size: 1.05em; font-weight: 600; cursor: pointer; transition: all 0.2s; text-align: left; display: flex; align-items: center; gap: 12px;">
+                <span style="font-size: 1.5em;">💾</span>
+                <div>
+                    <div>Save & Restore</div>
+                    <div style="font-size: 0.85em; font-weight: 400; color: #7f8c8d;">Backup and restore databases (gwu)</div>
+                </div>
+            </button>
+
+            <button style="padding: 16px 20px; background-color: #f8f9fa; color: #2c3e50; border: 2px solid #667eea; border-radius: 10px; font-size: 1.05em; font-weight: 600; cursor: pointer; transition: all 0.2s; text-align: left; display: flex; align-items: center; gap: 12px;">
+                <span style="font-size: 1.5em;">🧬</span>
+                <div>
+                    <div>Consanguinity Init</div>
+                    <div style="font-size: 0.85em; font-weight: 400; color: #7f8c8d;">Initialize consanguinities (consang)</div>
+                </div>
+            </button>
+
+            <button style="padding: 16px 20px; background-color: #f8f9fa; color: #2c3e50; border: 2px solid #f093fb; border-radius: 10px; font-size: 1.05em; font-weight: 600; cursor: pointer; transition: all 0.2s; text-align: left; display: flex; align-items: center; gap: 12px;">
+                <span style="font-size: 1.5em;">🔗</span>
+                <div>
+                    <div>Update Links</div>
+                    <div style="font-size: 0.85em; font-weight: 400; color: #7f8c8d;">Update family chronicle (update_nldb)</div>
+                </div>
+            </button>
+
+            <button style="padding: 16px 20px; background-color: #f8f9fa; color: #2c3e50; border: 2px solid #4facfe; border-radius: 10px; font-size: 1.05em; font-weight: 600; cursor: pointer; transition: all 0.2s; text-align: left; display: flex; align-items: center; gap: 12px;">
+                <span style="font-size: 1.5em;">🔄</span>
+                <div>
+                    <div>Connected Components</div>
+                    <div style="font-size: 0.85em; font-weight: 400; color: #7f8c8d;">Compute components (connex)</div>
+                </div>
+            </button>
+
+            <button style="padding: 16px 20px; background-color: #f8f9fa; color: #2c3e50; border: 2px solid #43e97b; border-radius: 10px; font-size: 1.05em; font-weight: 600; cursor: pointer; transition: all 0.2s; text-align: left; display: flex; align-items: center; gap: 12px;">
+                <span style="font-size: 1.5em;">⚖️</span>
+                <div>
+                    <div>Compute Difference</div>
+                    <div style="font-size: 0.85em; font-weight: 400; color: #7f8c8d;">Compare two databases (gwdiff)</div>
+                </div>
+            </button>
+
+            <button style="padding: 16px 20px; background-color: #f8f9fa; color: #2c3e50; border: 2px solid #fa709a; border-radius: 10px; font-size: 1.05em; font-weight: 600; cursor: pointer; transition: all 0.2s; text-align: left; display: flex; align-items: center; gap: 12px;">
+                <span style="font-size: 1.5em;">🔨</span>
+                <div>
+                    <div>Fix Database</div>
+                    <div style="font-size: 0.85em; font-weight: 400; color: #7f8c8d;">Fix problems in base (gwfixbase)</div>
+                </div>
+            </button>
+        </div>
+    </div>
+
+    <!-- Configure Section -->
+    <div style="background-color: white; padding: 35px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 30px;">
+        <h2 style="color: #4facfe; margin: 0 0 25px 0; font-size: 1.8em; display: flex; align-items: center; gap: 10px;">
+            ⚙️ Configure
+        </h2>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px;">
+            <button style="padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 10px; font-size: 1.05em; font-weight: 600; cursor: pointer; transition: opacity 0.2s; text-align: left; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px;">
+                    <span style="font-size: 1.8em;">📋</span>
+                    <div style="font-size: 1.15em;">Database Parameters</div>
+                </div>
+                <div style="font-size: 0.9em; opacity: 0.9;">
+                    Configure database settings (.gwf files)
+                </div>
+            </button>
+
+            <button style="padding: 20px; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; border: none; border-radius: 10px; font-size: 1.05em; font-weight: 600; cursor: pointer; transition: opacity 0.2s; text-align: left; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px;">
+                    <span style="font-size: 1.8em;">🌐</span>
+                    <div style="font-size: 1.15em;">GWD Service</div>
+                </div>
+                <div style="font-size: 0.9em; opacity: 0.9;">
+                    Configure gwd service parameters
+                </div>
+            </button>
+
+            <button style="padding: 20px; background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white; border: none; border-radius: 10px; font-size: 1.05em; font-weight: 600; cursor: pointer; transition: opacity 0.2s; text-align: left; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px;">
+                    <span style="font-size: 1.8em;">📝</span>
+                    <div style="font-size: 1.15em;">Cache Files</div>
+                </div>
+                <div style="font-size: 0.9em; opacity: 0.9;">
+                    Manage auto-completion cache files
+                </div>
+            </button>
+        </div>
+    </div>
+
+    <!-- Information Notice -->
+    <div style="background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%); padding: 25px; border-radius: 12px; border-left: 4px solid #ff9800; margin-bottom: 30px;">
+        <div style="display: flex; align-items: start; gap: 15px;">
+            <span style="font-size: 2em;">ℹ️</span>
+            <div>
+                <h3 style="color: #2c3e50; margin: 0 0 8px 0; font-size: 1.2em;">Development Mode</h3>
+                <p style="color: #7f8c8d; margin: 0; line-height: 1.6;">
+                    These management tools are placeholder buttons for now. Backend implementation is required to enable full functionality.
+                    Click on any button to trigger the corresponding management operation (coming soon).
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div style="display: flex; gap: 15px; justify-content: center; margin-bottom: 30px; flex-wrap: wrap;">
+        <a href="{{ url_for('index') }}"
+           style="display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; background-color: #95a5a6; color: white; text-decoration: none; border-radius: 8px; font-weight: 600; transition: background-color 0.2s;">
+            ← Back to Home
+        </a>
+        <a href="{{ url_for('search') }}"
+           style="display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 8px; font-weight: 600; transition: opacity 0.2s;">
+            🔍 Search Database
+        </a>
+    </div>
+</div>
+
+<style>
+    button:hover {
+        opacity: 0.9;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15) !important;
+    }
+
+    a[style*="background-color: #95a5a6"]:hover {
+        background-color: #7f8c8d !important;
+    }
+
+    a[style*="background: linear-gradient"]:hover {
+        opacity: 0.9;
+    }
+
+    button[style*="border: 2px"]:hover {
+        background-color: #e9ecef !important;
+        transform: translateY(-2px);
+    }
+</style>
+{% endblock %}
