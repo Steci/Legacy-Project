@@ -1,6 +1,10 @@
 import re
-from typing import Optional
-from .models import GWDatabase, Family, Person, NoteBlock, RelationBlock, EventLine
+from typing import List, Optional
+
+from models.date import Date, DMY
+from models.event import Event, Place
+
+from .models import GWDatabase, Family, Person, NoteBlock, RelationBlock
 from .utils import parse_name_token, canonical_key_from_tokens
 
 
@@ -24,6 +28,11 @@ class GWParser:
     def __init__(self, debug: bool = False):
         self.db = GWDatabase()
         self.debug = debug
+
+    def reset(self) -> None:
+        """Clear previously parsed data so the parser can be reused."""
+
+        self.db = GWDatabase()
 
     def parse_file(self, path: str) -> GWDatabase:
         with open(path, "r", encoding="utf-8", errors="replace") as f:
@@ -214,19 +223,71 @@ class GWParser:
                 family.raw.append(line)
                 return i + 1
             family.raw.append(line)
-            event_line = self._parse_event_line(line)
-            if event_line:
-                family.events.append(event_line)
+            event = self._parse_event_line(line)
+            if event:
+                family.events.append(event)
             i += 1
         return i
 
-    def _parse_event_line(self, raw: str) -> Optional[EventLine]:
+    def _parse_event_line(self, raw: str) -> Optional[Event]:
         tokens = raw.split()
         if not tokens:
             return None
         tag_token = tokens[0]
         tag = tag_token.lstrip('#').lower()
-        return EventLine(raw=raw, tag=tag, tokens=tokens[1:])
+
+        date_tokens: List[str] = []
+        place_tokens: List[str] = []
+        source_tokens: List[str] = []
+        other_tokens: List[str] = []
+
+        current = "date"
+        for token in tokens[1:]:
+            if token == "#p":
+                current = "place"
+                continue
+            if token == "#s":
+                current = "source"
+                continue
+            if token.startswith("#"):
+                other_tokens.append(token)
+                current = "other"
+                continue
+            if current == "date":
+                date_tokens.append(token)
+            elif current == "place":
+                place_tokens.append(token)
+            elif current == "source":
+                source_tokens.append(token)
+            else:
+                other_tokens.append(token)
+
+        date_text = self._tokens_to_text(date_tokens)
+        place_text = self._tokens_to_text(place_tokens)
+        source_text = self._tokens_to_text(source_tokens)
+        date_obj = Date(dmy=DMY(), text=date_text) if date_text else None
+        place_obj = Place(other=place_text) if place_text else None
+
+        event = Event(
+            name=tag,
+            date=date_obj,
+            place=place_obj,
+            source=source_text,
+        )
+
+        # Attach GeneWeb-specific metadata for downstream processing.
+        setattr(event, "raw", raw)
+        setattr(event, "tokens", tokens[1:])
+        setattr(event, "other_tokens", tuple(other_tokens))
+        setattr(event, "gw_kind", tag)
+
+        if tag in {"note", "csrc"}:
+            note_text = self._tokens_to_text(tokens[1:])
+            if note_text:
+                setattr(event, "note_text", note_text)
+            return event
+
+        return event
 
     def _parse_person_events_block(self, i: int, lines: list, toks: list) -> int:
         person_tokens = toks[1:]
@@ -247,11 +308,18 @@ class GWParser:
                 continue
             if line.lower() == "end pevt":
                 return i + 1
-            event_line = self._parse_event_line(line)
-            if event_line:
-                person.events.append(event_line)
+            event = self._parse_event_line(line)
+            if event:
+                person.events.append(event)
             i += 1
         return i
+
+    @staticmethod
+    def _tokens_to_text(tokens: List[str]) -> Optional[str]:
+        if not tokens:
+            return None
+        collapsed = " ".join(tokens).strip()
+        return collapsed or None
 
     def _family_surname_hint(self, family: Optional[Family]) -> Optional[str]:
         if not family:

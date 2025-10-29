@@ -1,0 +1,11 @@
+{
+  "source": "tests/fixtures/consang/first_cousin_large.gw",
+  "root_key": "Cousin Adam",
+  "expected_numbers": {
+    "Cousin Adam": 1,
+    "Parent Alex": 2,
+    "Partner Alice": 3,
+    "Ancestor John": 4,
+    "Ancestor Jane": 5
+  }
+}

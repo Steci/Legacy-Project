@@ -1,0 +1,39 @@
+encoding: utf-8
+gwplus
+
+fam Ancestor John + Ancestor Jane
+beg
+- h Parent Alex
+- f Parent Beth
+end
+
+fam Parent Alex + Partner Alice
+beg
+- h Cousin Adam
+end
+
+fam Partner Brian + Parent Beth
+beg
+- f Cousin Bella
+end
+
+fam Cousin Adam + Cousin Bella
+beg
+- h Child Charles
+end
+
+pevt Ancestor John
+#birt 1900
+end pevt
+
+pevt Ancestor Jane
+#birt 1902
+end pevt
+
+pevt Partner Alice
+#birt 1930
+end pevt
+
+pevt Partner Brian
+#birt 1930
+end pevt
