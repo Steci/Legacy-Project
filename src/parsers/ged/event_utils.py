@@ -1,10 +1,10 @@
-"""
-Event parsing utilities for GEDCOM parser.
-Extracted to reduce cyclomatic complexity while preserving OCaml compatibility.
-"""
+"""Event parsing utilities for GEDCOM parser using the new domain models."""
+
 from collections import defaultdict
-from typing import List, Dict, Optional, Any, DefaultDict
-from ..common.base_models import BaseEvent
+from typing import Any, DefaultDict, Dict, List, Optional
+
+from models.event import Event, Place
+
 from .models import GedcomRecord
 
 
@@ -49,7 +49,7 @@ class EventParsingUtils:
         # Parse place
         place_record = EventParsingUtils._find_sub_record(event_record, "PLAC")
         if place_record:
-            event_data['place'] = place_record.value
+            event_data['place'] = Place(other=place_record.value)
             
         # Parse type for EVEN events
         type_record = EventParsingUtils._find_sub_record(event_record, "TYPE")
@@ -104,15 +104,24 @@ class EventParsingUtils:
         return categorized
     
     @staticmethod
-    def create_event_from_data(event_type: str, event_data: Dict[str, Any], notes_extractor, source_extractor, event_record: GedcomRecord) -> BaseEvent:
-        """Create BaseEvent from parsed data."""
-        event = BaseEvent(event_type=event_type)
+    def create_event_from_data(
+        event_type: str,
+        event_data: Dict[str, Any],
+        notes_extractor,
+        source_extractor,
+        event_record: GedcomRecord,
+    ) -> Event:
+        """Create an Event instance from parsed data."""
+
+        display_name = event_data.get('event_type') or event_type
+        event = Event(name=display_name)
+        setattr(event, "gedcom_tag", event_type)
+        if 'event_type' in event_data:
+            setattr(event, "gedcom_type", event_data['event_type'])
         
         # Set basic data
         event.date = event_data.get('date')
         event.place = event_data.get('place')
-        if 'event_type' in event_data:
-            event.event_type = event_data['event_type']
             
         # Extract notes and sources
         event.note = notes_extractor(event_record)
@@ -120,7 +129,7 @@ class EventParsingUtils:
         source_result = source_extractor(event_record)
         if hasattr(source_result, "combined_text"):
             event.source = source_result.combined_text()
-            event.source_notes = source_result.combined_notes()
+            setattr(event, "source_notes", source_result.combined_notes())
         else:
             event.source = source_result
         

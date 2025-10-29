@@ -1,11 +1,15 @@
 # Tests for Legacy Project
 
-This directory contains all the test files for the Legacy Project. The tests are written using `pytest` and are designed to validate the functionality and correctness of the Python implementation, ensuring it behaves as expected and matches the original COBOL logic.
+This directory hosts the pytest suite for the Python rewrite. Tests now live in
+sub-packages (for example `consang/` and `parsers/`) so they mirror the source
+tree and keep fixtures close to the scenarios they exercise.
 
 ## Test Structure
 
-- **Unit Tests**: Located in `test_gw_parser.py`, these tests validate individual functions and methods in isolation.
-- **Functional Tests**: Located in `test_functional.py`, these tests validate the overall behavior of the system, ensuring that the Python implementation adheres to the business rules and logic of the original COBOL program.
+- **Consanguinity tests**: Under `consang/`, focus on the domain calculator, CLI,
+	and cousin-degree helpers.
+- **Parser tests**: Under `parsers/`, cover GeneWeb/GED parsing, exporter
+	pipelines, and regression fixtures.
 
 ## Prerequisites
 
@@ -32,16 +36,6 @@ This command sets the PYTHONPATH to include the src directory, allowing Python t
 
 Running Specific Test Files
 
-To run only the unit tests:
-```bash
-PYTHONPATH=$(pwd)/src pytest tests/test_gw_parser.py
-```
-
-To run only the functional tests:
-```bash
-PYTHONPATH=$(pwd)/src pytest tests/test_functional.py
-```
-
 Running a Specific Test
 
 To run a specific test, use the -k option with a keyword matching the test name. For example:
@@ -53,7 +47,8 @@ PYTHONPATH=$(pwd)/src pytest -k test_parse_family_normal_case
 
 ### When adding new tests:
 
-1. Place unit tests in test_gw_parser.py and functional tests in test_functional.py.
+1. Place unit tests alongside the feature they cover (e.g. `tests/consang/` or
+	`tests/parsers/gw/`).
 2. Use descriptive test names that clearly indicate the purpose of the test.
 3. Include a docstring in each test to explain what it validates.
 4. Follow pytest conventions for fixtures and assertions.
@@ -72,6 +67,24 @@ If a test fails, pytest will display detailed output, including the assertion th
 
 - The functional tests are designed to validate the Python implementation against the original COBOL logic. If discrepancies are found, ensure the Python implementation aligns with the business rules defined in the COBOL program.
 - Mocking is used in some tests to simulate file input/output and other external dependencies.
+
+
+## Regenerating golden fixtures
+
+The cousin-degree feature stores CLI and JSON goldens under
+`tests/fixtures/consang/`. Regenerate them with:
+
+```bash
+PYTHONPATH=$(pwd)/src python tools/regenerate_cousin_goldens.py
+```
+
+Add or update JSON scenarios in
+`tests/fixtures/consang/cousin_degrees/simple_cases.json`, then run the
+targeted tests:
+
+```bash
+PYTHONPATH=$(pwd)/src pytest tests/consang/test_cousin_degree.py
+```
 
 For any questions or issues, please contact the project maintainers.
 

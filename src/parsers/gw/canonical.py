@@ -3,11 +3,15 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from typing import Dict, Iterable, List, Optional, Tuple
+from typing import Dict, Iterable, List, Optional, Tuple, Set
 
-from ..common.base_models import BaseDate, BaseEvent, DatePrecision, Sex
+from models.date import Date, Precision
+from models.event import Event, Place
+from models.person.params import Sex as PersonSex
+
 from ..ged.models import GedcomDatabase, GedcomFamily, GedcomPerson
-from .models import GWDatabase, EventLine, Family as GWFamily
+from .models import GWDatabase, Family as GWFamily
+from .exporter import build_relationship_blocks
 
 
 BR_TAG_RE = re.compile(r"<br\s*/?>", re.IGNORECASE)
@@ -48,6 +52,8 @@ class CanonicalPerson:
     key: str
     sex: Optional[str]
     events: Tuple[CanonicalEvent, ...]
+    consanguinity: float = 0.0
+    consanguinity_issue: Optional[str] = None
 
 
 @dataclass(frozen=True)
@@ -68,6 +74,8 @@ class CanonicalDatabase:
     persons: Tuple[CanonicalPerson, ...]
     notes: Tuple[CanonicalNote, ...]
     relations: Tuple[CanonicalRelation, ...]
+    consanguinity_warnings: Tuple[str, ...] = ()
+    consanguinity_errors: Tuple[str, ...] = ()
 
 
 def canonicalize_gw(database: GWDatabase) -> CanonicalDatabase:
@@ -77,11 +85,9 @@ def canonicalize_gw(database: GWDatabase) -> CanonicalDatabase:
 
     families: List[CanonicalFamily] = []
     for family in database.families:
-        event_entries = []
+        event_entries: List[CanonicalEvent] = []
         for event in family.events:
-            canonical_event = _event_line_to_canonical(event)
-            if canonical_event is not None:
-                event_entries.append(canonical_event)
+            event_entries.extend(_gw_event_to_canonical(event))
         events = tuple(event_entries)
         children = tuple(
             CanonicalChild(key=child.key(), sex=_gender_to_sex(gender))
@@ -102,17 +108,17 @@ def canonicalize_gw(database: GWDatabase) -> CanonicalDatabase:
 
     persons: List[CanonicalPerson] = []
     for key, person in sorted(database.persons.items()):
-        event_entries = []
+        event_entries: List[CanonicalEvent] = []
         for event in person.events:
-            canonical_event = _event_line_to_canonical(event)
-            if canonical_event is not None:
-                event_entries.append(canonical_event)
+            event_entries.extend(_gw_event_to_canonical(event))
         events = tuple(event_entries)
         persons.append(
             CanonicalPerson(
                 key=key,
                 sex=sex_map.get(key),
                 events=events,
+                consanguinity=float(getattr(person, "consanguinity", 0.0) or 0.0),
+                consanguinity_issue=getattr(person, "consanguinity_issue", None),
             )
         )
 
@@ -124,10 +130,7 @@ def canonicalize_gw(database: GWDatabase) -> CanonicalDatabase:
         for note in sorted(database.notes, key=lambda n: n.person_key)
     )
 
-    relations = tuple(
-        CanonicalRelation(person_key=rel.person_key, lines=tuple(rel.lines))
-        for rel in sorted(database.relations, key=lambda r: r.person_key)
-    )
+    relations = _build_canonical_relations(database)
 
     families_sorted = tuple(
         sorted(
@@ -148,6 +151,8 @@ def canonicalize_gw(database: GWDatabase) -> CanonicalDatabase:
         persons=persons_sorted,
         notes=notes,
         relations=relations,
+        consanguinity_warnings=tuple(getattr(database, "consanguinity_warnings", []) or ()),
+        consanguinity_errors=tuple(getattr(database, "consanguinity_errors", []) or ()),
     )
 
 
@@ -174,8 +179,8 @@ def canonicalize_gedcom(database: GedcomDatabase) -> CanonicalDatabase:
                 husband=husband,
                 wife=wife,
                 options=(),
-                source=_normalize_text(family.source),
-                comment=_normalize_text(family.note, collapse_whitespace=False),
+                source=_normalize_text(family.sources),
+                comment=_normalize_text(family.notes, collapse_whitespace=False),
                 witnesses=_collect_witnesses(family, person_key_map),
                 events=events,
                 children=tuple(children),
@@ -189,7 +194,7 @@ def canonicalize_gedcom(database: GedcomDatabase) -> CanonicalDatabase:
         if not key:
             continue
         events = _collect_person_events(person)
-        note_text = _normalize_text(person.note, collapse_whitespace=False)
+        note_text = _normalize_text(person.notes, collapse_whitespace=False)
         note_lookup[key] = note_text
         if not events:
             continue
@@ -252,9 +257,9 @@ def _derive_sex_map(families: Iterable[GWFamily]) -> Dict[str, str]:
         husband = _normalize_key(family.husband)
         wife = _normalize_key(family.wife)
         if husband:
-            sex_map.setdefault(husband, Sex.MALE.value)
+            sex_map.setdefault(husband, "M")
         if wife:
-            sex_map.setdefault(wife, Sex.FEMALE.value)
+            sex_map.setdefault(wife, "F")
         for gender, person, _ in family.children:
             key = _normalize_key(person.key())
             if not key:
@@ -265,63 +270,54 @@ def _derive_sex_map(families: Iterable[GWFamily]) -> Dict[str, str]:
     return sex_map
 
 
-def _event_line_to_canonical(event_line: EventLine) -> Optional[CanonicalEvent]:
-    if event_line.tag in {"note", "csrc"}:
-        text = _normalize_text(" ".join(event_line.tokens))
-        if not text:
-            return None
-        if text.lower() in {"<br>", "<br/>", "<br />"}:
-            return None
-        return CanonicalEvent(
-            kind=event_line.tag,
+def _gw_event_to_canonical(event: Event) -> List[CanonicalEvent]:
+    kind_raw = getattr(event, "gw_kind", None) or getattr(event, "name", "")
+    kind = (kind_raw or "").lower()
+    if not kind:
+        return []
+
+    if kind in {"note", "csrc"}:
+        text = getattr(event, "note_text", None) or getattr(event, "note", None)
+        normalized = _normalize_text(text)
+        if not normalized or normalized.lower() in {"<br>", "<br/>", "<br />"}:
+            return []
+        return [
+            CanonicalEvent(
+                kind=kind,
+                date=None,
+                place=None,
+                source=None,
+                other=(f"text:{normalized}",),
+            )
+        ]
+
+    canonical_events = _base_event_to_canonical(kind, event)
+    if canonical_events:
+        return canonical_events
+
+    other_tokens = tuple(
+        str(token).strip()
+        for token in getattr(event, "other_tokens", ())
+        if str(token).strip()
+    )
+    if not other_tokens:
+        return []
+
+    return [
+        CanonicalEvent(
+            kind=kind,
             date=None,
             place=None,
             source=None,
-            other=(f"text:{text}",),
+            other=other_tokens,
         )
-
-    date_tokens: List[str] = []
-    place_tokens: List[str] = []
-    source_tokens: List[str] = []
-    other_tokens: List[str] = []
-
-    current = "date"
-    for token in event_line.tokens:
-        if token == "#p":
-            current = "place"
-            continue
-        if token == "#s":
-            current = "source"
-            continue
-        if token.startswith("#"):
-            other_tokens.append(token)
-            current = "other"
-            continue
-        if current == "date":
-            date_tokens.append(token)
-        elif current == "place":
-            place_tokens.append(token)
-        elif current == "source":
-            source_tokens.append(token)
-        else:
-            other_tokens.append(token)
-
-    if not any((date_tokens, place_tokens, source_tokens, other_tokens)):
-        return None
-
-    return CanonicalEvent(
-        kind=event_line.tag,
-        date=_join_tokens(date_tokens),
-        place=_join_tokens(place_tokens),
-        source=_join_tokens(source_tokens),
-        other=tuple(other_tokens),
-    )
+    ]
 
 
 def _collect_family_events(family: GedcomFamily) -> Tuple[CanonicalEvent, ...]:
     events: List[CanonicalEvent] = []
 
-    def _extend(kind: str, base_event: Optional[BaseEvent]) -> None:
+    def _extend(kind: str, base_event: Optional[Event]) -> None:
         if not base_event:
             return
         events.extend(_base_event_to_canonical(kind, base_event))
@@ -330,8 +326,8 @@ def _collect_family_events(family: GedcomFamily) -> Tuple[CanonicalEvent, ...]:
     _extend("div", family.divorce)
 
     for extra in family.events:
-        kind = extra.event_type.lower() if extra.event_type else "event"
-        events.extend(_base_event_to_canonical(kind, extra))
+        tag = _event_tag(extra).lower() or "event"
+        _extend(tag, extra)
 
     return tuple(_deduplicate_events(events))
 
@@ -349,8 +345,8 @@ def _collect_person_events(person: GedcomPerson) -> Tuple[CanonicalEvent, ...]:
             events.extend(_base_event_to_canonical(kind, event))
 
     for extra in person.events:
-        kind = extra.event_type.lower() if extra.event_type else "event"
-        events.extend(_base_event_to_canonical(kind, extra))
+        tag = _event_tag(extra).lower() or "event"
+        events.extend(_base_event_to_canonical(tag, extra))
 
     return tuple(_deduplicate_events(events))
 
@@ -358,8 +354,8 @@ def _collect_person_events(person: GedcomPerson) -> Tuple[CanonicalEvent, ...]:
 def _collect_witnesses(family: GedcomFamily, key_map: Dict[str, str]) -> Tuple[str, ...]:
     witnesses: List[str] = []
     for witness in family.witnesses:
-        person_id = witness.get("person_id") or witness.get("person")
-        role = witness.get("role") or ""
+        person_id = witness.get("person_id") or witness.get("person") or witness.get("witness")
+        role = witness.get("role") or witness.get("type") or ""
         key = _normalize_key(key_map.get(person_id))
         if key:
             entry = f"{role}:{key}" if role else key
@@ -367,17 +363,23 @@ def _collect_witnesses(family: GedcomFamily, key_map: Dict[str, str]) -> Tuple[s
     return tuple(sorted(set(witnesses)))
 
 
-def _base_event_to_canonical(kind: str, event: BaseEvent) -> List[CanonicalEvent]:
+def _base_event_to_canonical(kind: str, event: Event) -> List[CanonicalEvent]:
     normalized_kind = _EVENT_KIND_ALIASES.get(kind, kind)
     entries: List[CanonicalEvent] = []
 
-    date = _format_base_date(event.date)
-    place = _normalize_text(event.place)
+    date = _format_event_date(event.date)
+    place = _normalize_text(_place_to_text(event.place))
     source = _normalize_text(event.source)
     other: List[str] = []
 
-    if event.confidence:
-        other.append(f"confidence:{event.confidence}")
+    confidence = getattr(event, "confidence", None)
+    if confidence:
+        other.append(f"confidence:{confidence}")
+
+    for token in getattr(event, "other_tokens", ()):
+        normalized = str(token).strip()
+        if normalized:
+            other.append(normalized)
 
     if any((date, place, source, other)):
         entries.append(
@@ -391,8 +393,9 @@ def _base_event_to_canonical(kind: str, event: BaseEvent) -> List[CanonicalEvent
         )
 
     note_events = _notes_to_canonical(event.note)
-    if event.source_notes:
-        note_events.extend(_notes_to_canonical(event.source_notes, prefix="source_note"))
+    source_notes = getattr(event, "source_notes", None)
+    if source_notes:
+        note_events.extend(_notes_to_canonical(source_notes, prefix="source_note"))
 
     entries.extend(note_events)
     return entries
@@ -401,9 +404,9 @@ def _base_event_to_canonical(kind: str, event: BaseEvent) -> List[CanonicalEvent
 def _build_person_key_map(persons: Iterable[GedcomPerson]) -> Dict[str, str]:
     key_map: Dict[str, str] = {}
     counters: Dict[Tuple[str, str], int] = {}
-    for person in sorted(persons, key=lambda p: p.xref_id):
-        surname = _sanitize_name_component(person.name.surname) or "?"
-        first = _sanitize_name_component(person.name.first_name) or "0"
+    for person in sorted(persons, key=lambda p: p.xref_id or ""):
+        surname = _sanitize_name_component(person.surname) or "?"
+        first = _sanitize_name_component(person.first_name) or "0"
         base = (surname, first)
         index = counters.get(base, 0)
         counters[base] = index + 1
@@ -413,18 +416,26 @@ def _build_person_key_map(persons: Iterable[GedcomPerson]) -> Dict[str, str]:
 
 
 def _gender_to_sex(gender: Optional[str]) -> Optional[str]:
-    if gender == "h":
-        return Sex.MALE.value
-    if gender == "f":
-        return Sex.FEMALE.value
+    if not gender:
+        return None
+    token = gender.lower()
+    if token in {"h", "m", "male"}:
+        return "M"
+    if token in {"f", "female"}:
+        return "F"
     return None
 
 
-def _sex_to_str(sex: Sex) -> Optional[str]:
+def _sex_to_str(sex: Optional[PersonSex]) -> Optional[str]:
     if not sex:
         return None
-    value = sex.value
-    return value if value not in {Sex.UNKNOWN.value, Sex.NEUTER.value} else None
+    value = sex.value if isinstance(sex, PersonSex) else str(sex)
+    token = value.upper()
+    if token in {"MALE", "M"}:
+        return "M"
+    if token in {"FEMALE", "F"}:
+        return "F"
+    return None
 
 
 def _normalize_key(value: Optional[str]) -> Optional[str]:
@@ -434,12 +445,6 @@ def _normalize_key(value: Optional[str]) -> Optional[str]:
     if not text or text == "0":
         return None
     return text
-
-
-def _join_tokens(tokens: List[str]) -> Optional[str]:
-    return _normalize_text(" ".join(tokens)) if tokens else None
-
-
 def _normalize_text(value: Optional[str], *, collapse_whitespace: bool = True) -> Optional[str]:
     if value is None:
         return None
@@ -476,33 +481,64 @@ def _sanitize_name_component(value: Optional[str]) -> str:
     return sanitized
 
 
-def _format_base_date(date: Optional[BaseDate]) -> Optional[str]:
+def _event_tag(event: Optional[Event]) -> str:
+    if not event:
+        return ""
+    tag = getattr(event, "gedcom_tag", None)
+    if tag:
+        return str(tag)
+    name = getattr(event, "name", "")
+    return str(name or "")
+
+
+def _place_to_text(place: Optional[Place]) -> str:
+    if not place:
+        return ""
+
+    components = [
+        getattr(place, "other", ""),
+        getattr(place, "town", ""),
+        getattr(place, "county", ""),
+        getattr(place, "district", ""),
+        getattr(place, "region", ""),
+        getattr(place, "country", ""),
+    ]
+    values: List[str] = []
+    for component in components:
+        text = (component or "").strip()
+        if text and text not in values:
+            values.append(text)
+    return ", ".join(values)
+
+
+def _format_event_date(date: Optional[Date]) -> Optional[str]:
     if not date:
         return None
 
-    original = _normalize_text(date.original_text) if date.original_text else None
+    original = _normalize_text(date.text) if date.text else None
 
     if original and original.startswith("@#"):
         converted = _convert_revolutionary_date(original)
         return converted or original
 
     prefix = ""
-    precision = date.precision
-    if precision == DatePrecision.ABOUT:
+    precision = date.dmy.prec if date.dmy else None
+    if precision == Precision.ABOUT:
         prefix = "~"
-    elif precision == DatePrecision.BEFORE:
+    elif precision == Precision.BEFORE:
         prefix = "<"
-    elif precision == DatePrecision.AFTER:
+    elif precision == Precision.AFTER:
         prefix = ">"
-    elif precision in {DatePrecision.BETWEEN, DatePrecision.MAYBE, DatePrecision.UNKNOWN}:
+    elif precision in {Precision.MAYBE, Precision.OR_YEAR, Precision.YEAR_INT}:
         return original
 
-    if date.year:
-        if date.month:
-            if date.day:
-                return f"{prefix}{date.day}/{date.month}/{date.year}"
-            return f"{prefix}{date.month}/{date.year}"
-        return f"{prefix}{date.year}"
+    dmy = date.dmy
+    if dmy and dmy.year:
+        if dmy.month:
+            if dmy.day:
+                return f"{prefix}{dmy.day}/{dmy.month}/{dmy.year}"
+            return f"{prefix}{dmy.month}/{dmy.year}"
+        return f"{prefix}{dmy.year}"
 
     return original
 
@@ -597,3 +633,52 @@ def _deduplicate_events(events: List[CanonicalEvent]) -> List[CanonicalEvent]:
         seen.add(key)
         unique.append(event)
     return unique
+
+
+def _build_canonical_relations(database: GWDatabase) -> Tuple[CanonicalRelation, ...]:
+    relation_lines: Dict[str, List[str]] = {}
+    existing_targets: Dict[str, Set[str]] = {}
+
+    for block in getattr(database, "relations", []) or []:
+        lines = list(block.lines)
+        if not lines:
+            continue
+        relation_lines.setdefault(block.person_key, []).extend(lines)
+        targets = existing_targets.setdefault(block.person_key, set())
+        targets.update(filter(None, (_parse_rel_target(line) for line in lines)))
+
+    summaries = getattr(database, "relationship_summaries", {}) or {}
+    summary_blocks = build_relationship_blocks(summaries)
+
+    for person_key, blocks in summary_blocks.items():
+        targets = existing_targets.setdefault(person_key, set())
+        lines = relation_lines.setdefault(person_key, [])
+        for block_lines in blocks:
+            other = _parse_rel_target(block_lines[0]) if block_lines else None
+            if other and other in targets:
+                continue
+            if lines and lines[-1] != "":
+                lines.append("")
+            lines.extend(block_lines)
+            if other:
+                targets.add(other)
+
+    canonical_relations = tuple(
+        CanonicalRelation(person_key=person_key, lines=tuple(lines))
+        for person_key, lines in sorted(relation_lines.items(), key=lambda item: item[0])
+    )
+
+    return canonical_relations
+
+
+def _parse_rel_target(line: str) -> Optional[str]:
+    stripped = (line or "").strip()
+    lower = stripped.lower()
+    if not lower.startswith("- rel"):
+        return None
+    _, _, remainder = stripped.partition(":")
+    target = remainder.strip()
+    if not target:
+        return None
+    target = target.split(" coef", 1)[0].strip()
+    return target or None
