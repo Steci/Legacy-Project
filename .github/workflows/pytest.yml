@@ -1,7 +1,11 @@
+# This workflow runs pytest tests on the entire project
+
 name: Launch Pytest
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - main
 
 jobs:
   test:
@@ -20,7 +24,7 @@ jobs:
         run: pip install pytest
 
       - name: Run pytest
-        run: pytest consang/ --maxfail=1 --disable-warnings -q
+        run: pytest
 
       - name: Success message
         if: success()

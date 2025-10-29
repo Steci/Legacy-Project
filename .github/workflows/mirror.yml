@@ -1,3 +1,5 @@
+# This workflow performs a mirror push to the Epitech repository
+
 name: Mirror push workflow
 
 on:
