@@ -3,31 +3,269 @@
 {% block title %}Family - GeneWeb Legacy Project{% endblock %}
 
 {% block content %}
-<div style="max-width: 900px; margin: 0 auto;">
-    <h1 style="color: #2c3e50; margin-bottom: 30px;">Family Information</h1>
+<div style="max-width: 1100px; margin: 0 auto;">
+    <!-- Breadcrumb -->
+    <nav style="margin-bottom: 25px; color: #7f8c8d; font-size: 0.95em;">
+        <a href="{{ url_for('index') }}" style="color: #667eea; text-decoration: none; font-weight: 500;">🏠 Home</a>
+        <span style="margin: 0 8px;">›</span>
+        <a href="{{ url_for('search') }}" style="color: #667eea; text-decoration: none; font-weight: 500;">Search</a>
+        <span style="margin: 0 8px;">›</span>
+        <span style="color: #2c3e50; font-weight: 600;">Family</span>
+    </nav>
 
     {% if family %}
-    <div>
-        <h2>{{ family.father.first_name }} {{ family.father.surname }} & {{ family.mother.first_name }} {{ family.mother.surname }}</h2>
-        <!-- Family details would go here -->
+    <!-- Family Header Card -->
+    <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 40px; border-radius: 12px; margin-bottom: 30px; color: white; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+        <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px;">
+            <div style="width: 80px; height: 80px; background-color: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2.5em; border: 3px solid rgba(255,255,255,0.3);">
+                👨‍👩‍👧‍👦
+            </div>
+            <div>
+                <h1 style="margin: 0 0 8px 0; font-size: 2.3em; font-weight: 600;">Family Unit</h1>
+                <div style="font-size: 1.1em; opacity: 0.95;">
+                    {% if family.children %}{{ family.children|length }} children{% else %}No children recorded{% endif %}
+                </div>
+            </div>
+        </div>
     </div>
-    {% else %}
-    <div class="alert alert-info">
-        <p>Family pages are under development. This feature will display:</p>
-        <ul>
-            <li>Spouses (father and mother)</li>
-            <li>Marriage information (date, place)</li>
-            <li>Children list with links</li>
-            <li>Family events and notes</li>
-        </ul>
+
+    <!-- Parents Section -->
+    <div style="background-color: white; padding: 35px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 30px;">
+        <h2 style="color: #f093fb; margin: 0 0 25px 0; font-size: 1.6em; display: flex; align-items: center; gap: 10px; border-bottom: 2px solid #f0f0f0; padding-bottom: 15px;">
+            💑 Parents
+        </h2>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-bottom: 25px;">
+            {% if family.husband %}
+            <div style="background: linear-gradient(135deg, #e3f2fd 0%, #ffffff 100%); padding: 25px; border-radius: 10px; border: 2px solid #2196f3; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                    <div style="width: 45px; height: 45px; background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.5em;">
+                        ♂
+                    </div>
+                    <div>
+                        <div style="color: #7f8c8d; font-size: 0.85em; font-weight: 600; text-transform: uppercase;">Husband</div>
+                        <div style="color: #2c3e50; font-size: 1.2em; font-weight: 600;">{{ family.husband }}</div>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div style="background-color: #f8f9fa; padding: 25px; border-radius: 10px; border: 2px dashed #dee2e6; text-align: center;">
+                <div style="color: #95a5a6; font-style: italic;">No husband recorded</div>
+            </div>
+            {% endif %}
+
+            {% if family.wife %}
+            <div style="background: linear-gradient(135deg, #fce4ec 0%, #ffffff 100%); padding: 25px; border-radius: 10px; border: 2px solid #e91e63; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                    <div style="width: 45px; height: 45px; background: linear-gradient(135deg, #e91e63 0%, #c2185b 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.5em;">
+                        ♀
+                    </div>
+                    <div>
+                        <div style="color: #7f8c8d; font-size: 0.85em; font-weight: 600; text-transform: uppercase;">Wife</div>
+                        <div style="color: #2c3e50; font-size: 1.2em; font-weight: 600;">{{ family.wife }}</div>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div style="background-color: #f8f9fa; padding: 25px; border-radius: 10px; border: 2px dashed #dee2e6; text-align: center;">
+                <div style="color: #95a5a6; font-style: italic;">No wife recorded</div>
+            </div>
+            {% endif %}
+        </div>
+
+        {% if family.wedding_date %}
+        <div style="background: linear-gradient(135deg, #fff3e0 0%, #ffffff 100%); padding: 20px; border-radius: 10px; border-left: 4px solid #ff9800;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="font-size: 2em;">💍</div>
+                <div>
+                    <div style="color: #7f8c8d; font-size: 0.85em; font-weight: 600; text-transform: uppercase;">Marriage</div>
+                    <div style="color: #2c3e50; font-size: 1.15em; font-weight: 500;">{{ family.wedding_date }}</div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Children Section -->
+    <div style="background-color: white; padding: 35px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 30px;">
+        <h2 style="color: #667eea; margin: 0 0 25px 0; font-size: 1.6em; display: flex; align-items: center; gap: 10px; border-bottom: 2px solid #f0f0f0; padding-bottom: 15px;">
+            👶 Children
+            {% if family.children %}
+            <span style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.7em; font-weight: 600;">{{ family.children|length }}</span>
+            {% endif %}
+        </h2>
+
+        {% if family.children %}
+        <div style="display: grid; gap: 15px;">
+            {% for gender, child, remaining in family.children %}
+            <div style="background-color: #f8f9fa; padding: 20px; border-radius: 10px; border-left: 4px solid {% if gender == 'h' %}#2196f3{% elif gender == 'f' %}#e91e63{% else %}#9e9e9e{% endif %}; transition: transform 0.2s, box-shadow 0.2s;">
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <div style="width: 50px; height: 50px; background: linear-gradient(135deg, {% if gender == 'h' %}#2196f3 0%, #1976d2{% elif gender == 'f' %}#e91e63 0%, #c2185b{% else %}#9e9e9e 0%, #757575{% endif %} 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.5em; flex-shrink: 0;">
+                        {% if gender == 'h' %}♂
+                        {% elif gender == 'f' %}♀
+                        {% else %}👤{% endif %}
+                    </div>
+                    <div style="flex: 1;">
+                        <div style="color: #2c3e50; font-size: 1.2em; font-weight: 600; margin-bottom: 4px;">
+                            {{ child.first_name }} {{ child.surname }}
+                        </div>
+                        {% if child.occupation %}
+                        <div style="color: #7f8c8d; font-size: 0.95em; display: flex; align-items: center; gap: 6px;">
+                            <span>💼</span>
+                            <span>{{ child.occupation }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% if gender == 'h' %}
+                    <div style="background-color: #e3f2fd; color: #1976d2; padding: 6px 14px; border-radius: 20px; font-size: 0.85em; font-weight: 600;">
+                        Male
+                    </div>
+                    {% elif gender == 'f' %}
+                    <div style="background-color: #fce4ec; color: #c2185b; padding: 6px 14px; border-radius: 20px; font-size: 0.85em; font-weight: 600;">
+                        Female
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div style="text-align: center; padding: 40px; background-color: #f8f9fa; border-radius: 10px; border: 2px dashed #dee2e6;">
+            <div style="font-size: 3em; margin-bottom: 15px; opacity: 0.3;">👶</div>
+            <div style="color: #95a5a6; font-size: 1.1em; font-style: italic;">No children recorded for this family</div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Witnesses Section -->
+    {% if family.witnesses %}
+    <div style="background-color: white; padding: 35px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 30px;">
+        <h2 style="color: #4facfe; margin: 0 0 25px 0; font-size: 1.6em; display: flex; align-items: center; gap: 10px; border-bottom: 2px solid #f0f0f0; padding-bottom: 15px;">
+            👥 Witnesses
+            <span style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.7em; font-weight: 600;">{{ family.witnesses|length }}</span>
+        </h2>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 15px;">
+            {% for witness in family.witnesses %}
+            <div style="background-color: #f8f9fa; padding: 18px; border-radius: 8px; border-left: 4px solid #4facfe;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="font-size: 1.3em;">👤</div>
+                    <div style="color: #2c3e50; font-size: 1.05em; font-weight: 500;">{{ witness }}</div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
     </div>
     {% endif %}
 
-    <div style="margin-top: 30px;">
+    <!-- Family Events Section -->
+    {% if family.events %}
+    <div style="background-color: white; padding: 35px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 30px;">
+        <h2 style="color: #43e97b; margin: 0 0 25px 0; font-size: 1.6em; display: flex; align-items: center; gap: 10px; border-bottom: 2px solid #f0f0f0; padding-bottom: 15px;">
+            📅 Family Events
+        </h2>
+
+        <div style="display: grid; gap: 18px;">
+            {% for event in family.events %}
+            <div style="background: linear-gradient(to right, #f0f8ff, #ffffff); padding: 22px; border-radius: 10px; border-left: 4px solid #43e97b;">
+                <div style="color: #43e97b; font-weight: 600; font-size: 1.2em; margin-bottom: 12px;">
+                    {{ event.name }}
+                </div>
+                <div style="display: grid; gap: 8px;">
+                    {% if event.date %}
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="color: #7f8c8d; font-weight: 600;">📆 Date:</span>
+                        <span style="color: #2c3e50;">{{ event.date }}</span>
+                    </div>
+                    {% endif %}
+                    {% if event.place %}
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="color: #7f8c8d; font-weight: 600;">📍 Place:</span>
+                        <span style="color: #2c3e50;">{{ event.place }}</span>
+                    </div>
+                    {% endif %}
+                    {% if event.source %}
+                    <div style="display: flex; align-items: center; gap: 8px; margin-top: 5px;">
+                        <span style="color: #7f8c8d; font-weight: 600; font-size: 0.9em;">📄 Source:</span>
+                        <span style="color: #7f8c8d; font-size: 0.9em;">{{ event.source }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Source and Comments -->
+    {% if family.src or family.comm %}
+    <div style="background-color: white; padding: 35px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 30px;">
+        <h2 style="color: #feca57; margin: 0 0 25px 0; font-size: 1.6em; display: flex; align-items: center; gap: 10px; border-bottom: 2px solid #f0f0f0; padding-bottom: 15px;">
+            📝 Notes & Sources
+        </h2>
+
+        {% if family.src %}
+        <div style="background: linear-gradient(135deg, #e3f2fd 0%, #ffffff 100%); padding: 22px; border-radius: 10px; border-left: 4px solid #2196f3; margin-bottom: 18px;">
+            <div style="color: #2196f3; font-weight: 600; font-size: 1.1em; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+                <span>📄</span>
+                <span>Source</span>
+            </div>
+            <div style="color: #2c3e50; line-height: 1.6;">{{ family.src }}</div>
+        </div>
+        {% endif %}
+
+        {% if family.comm %}
+        <div style="background: linear-gradient(135deg, #fff3e0 0%, #ffffff 100%); padding: 22px; border-radius: 10px; border-left: 4px solid #ff9800;">
+            <div style="color: #ff9800; font-weight: 600; font-size: 1.1em; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+                <span>💬</span>
+                <span>Comment</span>
+            </div>
+            <div style="color: #2c3e50; line-height: 1.6;">{{ family.comm }}</div>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% else %}
+    <!-- No Family Data -->
+    <div style="text-align: center; padding: 60px 20px; background-color: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+        <div style="font-size: 5em; margin-bottom: 20px; opacity: 0.2;">👨‍👩‍👧‍👦</div>
+        <h2 style="color: #2c3e50; margin-bottom: 15px;">Family Not Found</h2>
+        <p style="color: #7f8c8d; font-size: 1.1em; margin-bottom: 30px;">
+            The requested family information is not available in the database.
+        </p>
+        <a href="{{ url_for('search') }}"
+           style="display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 8px; font-weight: 600;">
+            🔍 Search Database
+        </a>
+    </div>
+    {% endif %}
+
+    <!-- Action Buttons -->
+    <div style="display: flex; gap: 15px; justify-content: center; margin-bottom: 30px; flex-wrap: wrap;">
         <a href="{{ url_for('index') }}"
-           style="display: inline-block; padding: 10px 20px; background-color: #95a5a6; color: white; text-decoration: none; border-radius: 4px;">
+           style="display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; background-color: #95a5a6; color: white; text-decoration: none; border-radius: 8px; font-weight: 600; transition: background-color 0.2s;">
             ← Back to Home
+        </a>
+        <a href="{{ url_for('search') }}"
+           style="display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 8px; font-weight: 600; transition: opacity 0.2s;">
+            🔍 Search Database
         </a>
     </div>
 </div>
+
+<style>
+    a[style*="background-color: #95a5a6"]:hover {
+        background-color: #7f8c8d !important;
+    }
+
+    a[style*="background: linear-gradient"]:hover {
+        opacity: 0.9;
+    }
+
+    div[style*="border-left: 4px"]:hover {
+        transform: translateX(3px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+</style>
 {% endblock %}

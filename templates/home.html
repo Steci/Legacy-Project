@@ -3,115 +3,215 @@
 {% block title %}Home - GeneWeb Legacy Project{% endblock %}
 
 {% block content %}
-<div style="text-align: center; padding: 40px 20px;">
-    <h1 style="color: #2c3e50; margin-bottom: 20px;">Welcome to GeneWeb Legacy Project</h1>
+<div style="max-width: 1200px; margin: 0 auto;">
+    <!-- Hero Section -->
+    <div style="text-align: center; padding: 60px 20px 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; margin-bottom: 40px; color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+        <h1 style="margin: 0 0 15px 0; font-size: 2.8em; font-weight: 600;">GeneWeb Legacy Project</h1>
+        <p style="font-size: 1.3em; opacity: 0.95; margin: 0 0 30px 0; max-width: 700px; margin-left: auto; margin-right: auto;">
+            A Python translation of the GeneWeb genealogy software, preserving family histories and relationships.
+        </p>
 
-    <p style="font-size: 1.2em; color: #7f8c8d; max-width: 800px; margin: 0 auto 30px;">
-        This is a Python translation of the GeneWeb genealogy software, originally written in OCaml.
-        The project demonstrates modern software engineering practices while maintaining functional
-        equivalence with the original system.
-    </p>
-
-    <div class="alert alert-info" style="max-width: 800px; margin: 0 auto 30px; text-align: left;">
-        <h3 style="margin-top: 0;">Project Status</h3>
-        <ul style="margin-bottom: 0;">
-            <li><strong>Core Algorithms:</strong> ✅ Complete (Consanguinity, Sosa numbering, Relationships)</li>
-            <li><strong>Data Models:</strong> ✅ Complete (Person, Family, Event, Date)</li>
-            <li><strong>File Parsers:</strong> ✅ Complete (GeneWeb .gw, GEDCOM .ged)</li>
-            <li><strong>Frontend Integration:</strong> ✅ Complete (This web interface!)</li>
-            <li><strong>Template Engine:</strong> 🚧 In Progress (Using Jinja2 for now)</li>
-            <li><strong>Display Modules:</strong> 🚧 In Progress (Person pages working)</li>
-        </ul>
-    </div>
-
-    <h2 style="color: #34495e; margin: 40px 0 20px;">Sample Persons in Database</h2>
-
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; max-width: 900px; margin: 0 auto;">
-        {% for person_id, person in persons.items() %}
-        <div style="border: 1px solid #ddd; border-radius: 8px; padding: 20px; background-color: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-            <h3 style="margin-top: 0; color: #2c3e50;">
-                <a href="{{ url_for('person', person_id=person_id) }}" style="color: #3498db; text-decoration: none;">
-                    {{ person.first_name }} {{ person.surname }}
-                </a>
-            </h3>
-
-            <p style="color: #7f8c8d; margin: 10px 0;">
-                <strong>Sex:</strong> {{ person.sex.name if person.sex else 'Unknown' }}
-            </p>
-
-            {% if person.occupation %}
-            <p style="color: #7f8c8d; margin: 10px 0;">
-                <strong>Occupation:</strong> {{ person.occupation }}
-            </p>
-            {% endif %}
-
-            {% if person.birth and person.birth.date and person.birth.date.dmy %}
-            <p style="color: #7f8c8d; margin: 10px 0;">
-                <strong>Born:</strong> {{ person.birth.date.dmy.year }}
-                {% if person.birth.place and person.birth.place.town %}
-                in {{ person.birth.place.town }}
-                {% endif %}
-            </p>
-            {% endif %}
-
-            {% if person.death and person.death.date and person.death.date.dmy %}
-            <p style="color: #7f8c8d; margin: 10px 0;">
-                <strong>Died:</strong> {{ person.death.date.dmy.year }}
-                {% if person.death.place and person.death.place.town %}
-                in {{ person.death.place.town }}
-                {% endif %}
-            </p>
-            {% endif %}
-
-            <p style="margin-top: 15px;">
-                <a href="{{ url_for('person', person_id=person_id) }}"
-                   style="display: inline-block; padding: 8px 16px; background-color: #3498db; color: white; text-decoration: none; border-radius: 4px;">
-                    View Details
-                </a>
-            </p>
-        </div>
-        {% endfor %}
-    </div>
-
-    <h2 style="color: #34495e; margin: 40px 0 20px;">Features</h2>
-
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; max-width: 900px; margin: 0 auto;">
-        <div style="padding: 20px; background-color: #ecf0f1; border-radius: 8px;">
-            <h3 style="color: #2c3e50; margin-top: 0;">Person Pages</h3>
-            <p>View detailed information about individuals including birth, death, occupation, and biographical notes.</p>
-        </div>
-
-        <div style="padding: 20px; background-color: #ecf0f1; border-radius: 8px;">
-            <h3 style="color: #2c3e50; margin-top: 0;">REST API</h3>
-            <p>Access genealogy data programmatically via JSON API endpoints.</p>
-        </div>
-
-        <div style="padding: 20px; background-color: #ecf0f1; border-radius: 8px;">
-            <h3 style="color: #2c3e50; margin-top: 0;">Search</h3>
-            <p>Search for persons and families in the database (coming soon).</p>
-        </div>
-
-        <div style="padding: 20px; background-color: #ecf0f1; border-radius: 8px;">
-            <h3 style="color: #2c3e50; margin-top: 0;">Relationships</h3>
-            <p>Calculate consanguinity and cousin degrees (via backend modules).</p>
+        <!-- Quick Action Buttons -->
+        <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+            <a href="{{ url_for('search') }}"
+               style="display: inline-flex; align-items: center; gap: 8px; padding: 14px 28px; background-color: white; color: #667eea; text-decoration: none; border-radius: 8px; font-size: 1.1em; font-weight: 600; box-shadow: 0 2px 4px rgba(0,0,0,0.2); transition: transform 0.2s;">
+                🔍 Search Database
+            </a>
+            <a href="#import-export"
+               style="display: inline-flex; align-items: center; gap: 8px; padding: 14px 28px; background-color: rgba(255,255,255,0.2); color: white; text-decoration: none; border-radius: 8px; font-size: 1.1em; font-weight: 600; border: 2px solid white; transition: transform 0.2s;">
+                📁 Import/Export
+            </a>
         </div>
     </div>
 
-    <h2 style="color: #34495e; margin: 40px 0 20px;">Quick Links</h2>
+    <!-- Database Statistics -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 50px;">
+        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 12px; text-align: center; color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <div style="font-size: 3em; font-weight: bold; margin-bottom: 10px;">{{ persons.items()|length }}</div>
+            <div style="font-size: 1.2em; opacity: 0.9;">Persons</div>
+        </div>
 
-    <div style="margin-top: 20px;">
-        <a href="{{ url_for('person', person_id='darwin') }}"
-           style="display: inline-block; padding: 12px 24px; margin: 10px; background-color: #3498db; color: white; text-decoration: none; border-radius: 4px; font-size: 1.1em;">
-            View Charles Darwin
-        </a>
-        <a href="{{ url_for('person', person_id='lovelace') }}"
-           style="display: inline-block; padding: 12px 24px; margin: 10px; background-color: #3498db; color: white; text-decoration: none; border-radius: 4px; font-size: 1.1em;">
-            View Ada Lovelace
-        </a>
-        <a href="{{ url_for('api_persons') }}"
-           style="display: inline-block; padding: 12px 24px; margin: 10px; background-color: #27ae60; color: white; text-decoration: none; border-radius: 4px; font-size: 1.1em;">
-            View API Data
-        </a>
+        <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 30px; border-radius: 12px; text-align: center; color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <div style="font-size: 3em; font-weight: bold; margin-bottom: 10px;">15</div>
+            <div style="font-size: 1.2em; opacity: 0.9;">Families</div>
+        </div>
+
+        <div style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); padding: 30px; border-radius: 12px; text-align: center; color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <div style="font-size: 3em; font-weight: bold; margin-bottom: 10px;">∞</div>
+            <div style="font-size: 1.2em; opacity: 0.9;">Relationships</div>
+        </div>
+    </div>
+
+    <!-- Features Grid -->
+    <h2 style="color: #2c3e50; font-size: 2em; margin-bottom: 25px; text-align: center;">Features</h2>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 25px; margin-bottom: 50px;">
+        <div style="background-color: white; padding: 30px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); transition: transform 0.2s, box-shadow 0.2s; border-top: 4px solid #667eea;">
+            <div style="font-size: 2.5em; margin-bottom: 15px;">👤</div>
+            <h3 style="color: #2c3e50; margin: 0 0 12px 0; font-size: 1.4em;">Person Pages</h3>
+            <p style="color: #7f8c8d; line-height: 1.6; margin: 0;">
+                View detailed biographical information including birth, death, occupation, family relationships, and historical notes.
+            </p>
+        </div>
+
+        <div style="background-color: white; padding: 30px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); transition: transform 0.2s, box-shadow 0.2s; border-top: 4px solid #f093fb;">
+            <div style="font-size: 2.5em; margin-bottom: 15px;">👨‍👩‍👧‍👦</div>
+            <h3 style="color: #2c3e50; margin: 0 0 12px 0; font-size: 1.4em;">Family Trees</h3>
+            <p style="color: #7f8c8d; line-height: 1.6; margin: 0;">
+                Explore family units with parent-child relationships, marriage records, and multi-generational connections.
+            </p>
+        </div>
+
+        <div style="background-color: white; padding: 30px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); transition: transform 0.2s, box-shadow 0.2s; border-top: 4px solid #4facfe;">
+            <div style="font-size: 2.5em; margin-bottom: 15px;">🔍</div>
+            <h3 style="color: #2c3e50; margin: 0 0 12px 0; font-size: 1.4em;">Powerful Search</h3>
+            <p style="color: #7f8c8d; line-height: 1.6; margin: 0;">
+                Search by name, place, occupation, or date. Find connections and discover ancestors with ease.
+            </p>
+        </div>
+
+        <div style="background-color: white; padding: 30px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); transition: transform 0.2s, box-shadow 0.2s; border-top: 4px solid #43e97b;">
+            <div style="font-size: 2.5em; margin-bottom: 15px;">🧬</div>
+            <h3 style="color: #2c3e50; margin: 0 0 12px 0; font-size: 1.4em;">Consanguinity</h3>
+            <p style="color: #7f8c8d; line-height: 1.6; margin: 0;">
+                Calculate relationship degrees and consanguinity coefficients to understand family connections.
+            </p>
+        </div>
+
+        <div style="background-color: white; padding: 30px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); transition: transform 0.2s, box-shadow 0.2s; border-top: 4px solid #fa709a;">
+            <div style="font-size: 2.5em; margin-bottom: 15px;">📊</div>
+            <h3 style="color: #2c3e50; margin: 0 0 12px 0; font-size: 1.4em;">REST API</h3>
+            <p style="color: #7f8c8d; line-height: 1.6; margin: 0;">
+                Access genealogy data programmatically via JSON API endpoints for integration with other tools.
+            </p>
+        </div>
+
+        <div style="background-color: white; padding: 30px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); transition: transform 0.2s, box-shadow 0.2s; border-top: 4px solid #feca57;">
+            <div style="font-size: 2.5em; margin-bottom: 15px;">📁</div>
+            <h3 style="color: #2c3e50; margin: 0 0 12px 0; font-size: 1.4em;">Data Import/Export</h3>
+            <p style="color: #7f8c8d; line-height: 1.6; margin: 0;">
+                Import GeneWeb (.gw) files and GEDCOM formats. Export your data for backup and sharing.
+            </p>
+        </div>
+    </div>
+
+    <!-- Import/Export Section -->
+    <div id="import-export" style="background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%); padding: 40px; border-radius: 12px; margin-bottom: 50px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+        <h2 style="color: #2c3e50; font-size: 2em; margin: 0 0 20px 0; text-align: center;">Import/Export Database</h2>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; max-width: 900px; margin: 0 auto;">
+            <!-- Import Section -->
+            <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                <h3 style="color: #667eea; margin: 0 0 15px 0; font-size: 1.3em; display: flex; align-items: center; gap: 10px;">
+                    ⬆️ Import Data
+                </h3>
+                <p style="color: #7f8c8d; margin-bottom: 20px; line-height: 1.6;">
+                    Load genealogy data from GeneWeb (.gw) or GEDCOM (.ged) files into the database.
+                </p>
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; color: #2c3e50; font-weight: 600; margin-bottom: 8px;">Select File:</label>
+                    <input type="file"
+                           accept=".gw,.ged,.gedcom"
+                           style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 6px; font-size: 1em;">
+                </div>
+                <button style="width: 100%; padding: 12px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 6px; font-size: 1.05em; font-weight: 600; cursor: pointer; transition: opacity 0.2s;">
+                    Import Database
+                </button>
+                <p style="color: #95a5a6; font-size: 0.9em; margin-top: 12px; margin-bottom: 0;">
+                    <strong>Note:</strong> Current database path: <code style="background: #f0f0f0; padding: 2px 6px; border-radius: 3px;">examples_files/galichet_ref.gw</code>
+                </p>
+            </div>
+
+            <!-- Export Section -->
+            <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                <h3 style="color: #f093fb; margin: 0 0 15px 0; font-size: 1.3em; display: flex; align-items: center; gap: 10px;">
+                    ⬇️ Export Data
+                </h3>
+                <p style="color: #7f8c8d; margin-bottom: 20px; line-height: 1.6;">
+                    Export the current database to GeneWeb or GEDCOM format for backup or sharing.
+                </p>
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; color: #2c3e50; font-weight: 600; margin-bottom: 8px;">Export Format:</label>
+                    <select style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 6px; font-size: 1em; background: white;">
+                        <option value="gw">GeneWeb (.gw)</option>
+                        <option value="gedcom">GEDCOM (.ged)</option>
+                        <option value="json">JSON (.json)</option>
+                    </select>
+                </div>
+                <button style="width: 100%; padding: 12px; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; border: none; border-radius: 6px; font-size: 1.05em; font-weight: 600; cursor: pointer; transition: opacity 0.2s;">
+                    Export Database
+                </button>
+                <p style="color: #95a5a6; font-size: 0.9em; margin-top: 12px; margin-bottom: 0;">
+                    <strong>Info:</strong> Exports {{ persons.items()|length }} persons and 15 families
+                </p>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 25px; padding: 20px; background-color: rgba(255,255,255,0.6); border-radius: 8px;">
+            <p style="color: #7f8c8d; margin: 0; font-size: 0.95em;">
+                ℹ️ <strong>Development Mode:</strong> Import/Export functionality requires backend implementation.
+                To change the database file, edit the <code style="background: rgba(0,0,0,0.1); padding: 2px 6px; border-radius: 3px;">GENEWEB_DB_PATH</code> variable in <code style="background: rgba(0,0,0,0.1); padding: 2px 6px; border-radius: 3px;">app.py</code>
+            </p>
+        </div>
+    </div>
+
+    <!-- Quick Start Guide -->
+    <div style="background-color: white; padding: 40px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 50px;">
+        <h2 style="color: #2c3e50; font-size: 2em; margin: 0 0 25px 0; text-align: center;">Quick Start Guide</h2>
+
+        <div style="display: grid; gap: 20px; max-width: 700px; margin: 0 auto;">
+            <div style="display: flex; gap: 20px; align-items: start;">
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; font-size: 1.2em;">1</div>
+                <div>
+                    <h3 style="color: #2c3e50; margin: 0 0 8px 0; font-size: 1.2em;">Browse the Database</h3>
+                    <p style="color: #7f8c8d; margin: 0; line-height: 1.6;">
+                        Use the <a href="{{ url_for('search') }}" style="color: #667eea; text-decoration: none; font-weight: 600;">Search</a> page to find persons by name, place, or occupation.
+                    </p>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 20px; align-items: start;">
+                <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; font-size: 1.2em;">2</div>
+                <div>
+                    <h3 style="color: #2c3e50; margin: 0 0 8px 0; font-size: 1.2em;">Explore Person Details</h3>
+                    <p style="color: #7f8c8d; margin: 0; line-height: 1.6;">
+                        Click on any person to view their biographical information, life events, and family relationships.
+                    </p>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 20px; align-items: start;">
+                <div style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; font-size: 1.2em;">3</div>
+                <div>
+                    <h3 style="color: #2c3e50; margin: 0 0 8px 0; font-size: 1.2em;">Access via API</h3>
+                    <p style="color: #7f8c8d; margin: 0; line-height: 1.6;">
+                        Use the <a href="{{ url_for('api_persons') }}" style="color: #667eea; text-decoration: none; font-weight: 600;">REST API</a> to integrate genealogy data with your own applications.
+                    </p>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
+
+<style>
+    /* Hover effects */
+    a[style*="background-color: white"]:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.3) !important;
+    }
+
+    a[style*="background-color: rgba"]:hover {
+        background-color: rgba(255,255,255,0.3) !important;
+        transform: translateY(-2px);
+    }
+
+    div[style*="border-top:"]:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 6px 12px rgba(0,0,0,0.15) !important;
+    }
+
+    button:hover {
+        opacity: 0.9;
+    }
+</style>
 {% endblock %}

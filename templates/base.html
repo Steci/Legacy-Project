@@ -14,42 +14,52 @@
 
     <style>
         body {
-            font-family: Arial, Helvetica, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
             margin: 0;
             padding: 0;
-            background-color: #f5f5f5;
+            background: linear-gradient(to bottom, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
         }
         .header {
-            background-color: #2c3e50;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 20px;
+            padding: 25px 20px;
             text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
         .header h1 {
             margin: 0;
             font-size: 2.5em;
+            font-weight: 600;
         }
         .header p {
-            margin: 5px 0 0 0;
-            font-size: 1.1em;
-            opacity: 0.9;
+            margin: 8px 0 0 0;
+            font-size: 1.15em;
+            opacity: 0.95;
         }
         .nav {
-            background-color: #34495e;
-            padding: 10px 20px;
+            background-color: rgba(255,255,255,0.95);
+            padding: 12px 20px;
             display: flex;
             justify-content: center;
-            gap: 20px;
+            gap: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            backdrop-filter: blur(10px);
         }
         .nav a {
-            color: white;
+            color: #667eea;
             text-decoration: none;
-            padding: 10px 15px;
-            border-radius: 4px;
-            transition: background-color 0.3s;
+            padding: 10px 20px;
+            border-radius: 8px;
+            transition: all 0.2s;
+            font-weight: 600;
+            font-size: 1.05em;
         }
         .nav a:hover {
-            background-color: #2c3e50;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
         }
         .container {
             max-width: 1200px;
@@ -60,14 +70,20 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         .footer {
-            background-color: #2c3e50;
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
             color: white;
             text-align: center;
-            padding: 20px;
-            margin-top: 40px;
+            padding: 30px 20px;
+            margin-top: 50px;
+            box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
         }
         .footer p {
-            margin: 5px 0;
+            margin: 8px 0;
+            opacity: 0.9;
+        }
+        .footer p:first-child {
+            font-size: 1.1em;
+            font-weight: 600;
         }
         .alert {
             padding: 15px;
@@ -97,8 +113,7 @@
     <div class="nav">
         <a href="{{ url_for('index') }}">Home</a>
         <a href="{{ url_for('search') }}">Search</a>
-        <a href="{{ url_for('person', person_id='darwin') }}">Charles Darwin</a>
-        <a href="{{ url_for('person', person_id='lovelace') }}">Ada Lovelace</a>
+        <a href="{{ url_for('management') }}">Management</a>
         <a href="{{ url_for('api_persons') }}">API</a>
     </div>
 
