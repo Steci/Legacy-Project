@@ -6,8 +6,8 @@ from datetime import date
 from enum import Enum
 import json
 
-from event import Event, Witness
-from date import Date
+from ..event import Event, Witness
+from ..date import Date
 
 class RelationKind(Enum):
     MARRIED = "married"
@@ -184,7 +184,7 @@ class Family:
                              note: Optional[str] = None, source: Optional[str] = None,
                              witnesses: Optional[List[Witness]] = None) -> Event:
         """Create a marriage event"""
-        from event import Place
+        from ..event import Place
         place_obj = Place(other=place) if place else None
         event = Event(name="Marriage", date=date, place=place_obj,
                      note=note, source=source, witnesses=witnesses or [])
@@ -194,7 +194,7 @@ class Family:
     def create_divorce_event(self, date: Optional[Date] = None, place: Optional[str] = None,
                             note: Optional[str] = None, source: Optional[str] = None) -> Event:
         """Create a divorce event"""
-        from event import Place
+        from ..event import Place
         place_obj = Place(other=place) if place else None
         event = Event(name="Divorce", date=date, place=place_obj,
                      note=note, source=source)
@@ -555,7 +555,7 @@ class Family:
             if event_data.get('date'):
                 date_data = event_data['date']
                 if date_data.get('dmy'):
-                    from date import DMY, Precision, Calendar
+                    from ..date import DMY, Precision, Calendar
                     dmy_data = date_data['dmy']
                     dmy = DMY(
                         day=dmy_data.get('day', 0),
@@ -573,7 +573,7 @@ class Family:
             # Reconstruct place
             place_obj = None
             if event_data.get('place'):
-                from event import Place
+                from ..event import Place
                 place_data = event_data['place']
                 place_obj = Place(
                     country=place_data.get('country', ''),
@@ -589,7 +589,7 @@ class Family:
             # Reconstruct witnesses
             witnesses = []
             if event_data.get('witnesses'):
-                from event import Witness, WitnessType
+                from ..event import Witness, WitnessType
                 for w_data in event_data['witnesses']:
                     witness = Witness(
                         key_index=w_data.get('key_index', 0),

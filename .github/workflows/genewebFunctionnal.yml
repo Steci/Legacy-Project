@@ -1,0 +1,50 @@
+# This workflow performs a functional test on the entire Geneweb project, the report is available in the logs
+
+name: Geneweb Functional Test
+
+on:
+  workflow_dispatch:
+
+jobs:
+  geneweb-test:
+    name: Build and test Geneweb server
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y opam m4 make unzip curl
+
+      - name: Initialize opam
+        run: |
+          opam init -y --disable-sandboxing
+          eval $(opam env)
+
+      - name: Install OCaml packages
+        run: |
+          eval $(opam env)
+          opam switch create 4.14.1 || opam switch set 4.14.1
+          eval $(opam env)
+          opam install -y dune menhir ocamlfind
+
+      - name: Build Geneweb
+        run: |
+          eval $(opam env)
+          make distrib
+
+      - name: Start Geneweb server
+        run: |
+          eval $(opam env)
+          ./gw/gwd &    # lance le serveur en background
+          sleep 5       # attend que le serveur démarre
+
+      - name: Test Geneweb server is running
+        run: curl -I http://localhost:2317 || (echo "Geneweb server failed to start" && exit 1)
+
+      - name: Success message
+        if: success()
+        run: echo "The workflow has been executed correctly !"
