@@ -10,15 +10,18 @@ class DiskStorage:
         if not os.path.exists(self.filepath) or os.path.getsize(self.filepath) == 0:
             self.data = {}
             return
-        with open(self.filepath, 'rb') as f:
-            loaded = pickle.load(f)
-            # Make sure it’s a dict
-            if isinstance(loaded, dict):
-                self.data = loaded
-            else:
-                print(f"Warning: storage file {self.filepath} contained invalid data, resetting.")
-                self.data = {}
 
+        try:
+            with open(self.filepath, 'rb') as f:
+                loaded = pickle.load(f)
+                if isinstance(loaded, dict):
+                    self.data = loaded
+                else:
+                    print(f"Warning: storage file {self.filepath} contained invalid data, resetting.")
+                    self.data = {}
+        except (pickle.UnpicklingError, EOFError, Exception) as e:
+            print(f"Warning: storage file {self.filepath} contained invalid data ({e}), resetting.")
+            self.data = {}
 
     def save(self, data):
         with open(self.filepath, 'wb') as f:
