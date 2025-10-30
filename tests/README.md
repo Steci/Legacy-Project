@@ -1,90 +1,168 @@
-# Tests for Legacy Project
+# Unit Test Technical Document — Legacy Project
 
-This directory hosts the pytest suite for the Python rewrite. Tests now live in
-sub-packages (for example `consang/` and `parsers/`) so they mirror the source
-tree and keep fixtures close to the scenarios they exercise.
+This document explains how to structure, run, and extend the pytest-based test suite for the Python rewrite of the Legacy Project.
+
+Tests are organized into sub-packages under `tests/` (e.g., `tests/consang/`, `tests/parsers/`) to mirror the source tree in `src/` and keep fixtures close to the code they exercise.
+
+---
 
 ## Test Structure
 
-- **Consanguinity tests**: Under `consang/`, focus on the domain calculator, CLI,
-	and cousin-degree helpers.
-- **Parser tests**: Under `parsers/`, cover GeneWeb/GED parsing, exporter
-	pipelines, and regression fixtures.
+* **Consanguinity tests** (`tests/consang/`):
+  Cover the domain logic, cousin-degree calculations, CLI commands, and helper functions.
+
+* **Parser tests** (`tests/parsers/`):
+  Include GeneWeb/GED parsing, exporters, regression fixtures, and functional pipelines.
+
+* **Database tests** (`tests/db/`):
+  Validate the Pythonized storage layer (`DiskStorage`, database operations, serialization/deserialization).
+
+* **Search engine tests** (`tests/search_engine/`):
+  Cover search functionality, API behavior, and statistics.
+
+* **Sosa tests** (`tests/sosa/`):
+  Test caching, branch calculation, CLI integration, and formatter output.
+
+---
 
 ## Prerequisites
 
-Before running the tests, ensure the following dependencies are installed:
+Make sure the following are installed:
 
-- Python 3.12 or later
-- `pytest`
-- `pytest-mock` (for mocking functionality)
+* Python 3.12 or later
+* `pytest`
+* `pytest-mock` (for mocking functionality)
 
-You can install the required dependencies using:
+Install dependencies via pip:
 
 ```bash
 pip install pytest pytest-mock
 ```
 
+---
+
 ## Running the Tests
 
-To run the tests, navigate to the root directory of the project and use the following command:
+### Run the full test suite
+
+From the root of the project:
+
 ```bash
-PYTHONPATH=$(pwd)/src pytest tests
+PYTHONPATH=$(pwd)/src pytest tests --cov=src --cov-report=term-missing -v
 ```
 
-This command sets the PYTHONPATH to include the src directory, allowing Python to locate the modules correctly.
+* `PYTHONPATH=$(pwd)/src` ensures Python can find the source modules.
+* `--cov=src` collects coverage.
+* `--cov-report=term-missing` shows lines not covered.
+* `-v` provides verbose output.
 
-Running Specific Test Files
+### Run a specific test file
 
-Running a Specific Test
-
-To run a specific test, use the -k option with a keyword matching the test name. For example:
 ```bash
-PYTHONPATH=$(pwd)/src pytest -k test_parse_family_normal_case
+PYTHONPATH=$(pwd)/src pytest tests/consang/test_cousin_degree.py -v
 ```
+
+### Run a specific test function
+
+Use the `-k` option with a keyword matching the test name:
+
+```bash
+PYTHONPATH=$(pwd)/src pytest -k test_parse_family_normal_case -v
+```
+
+---
 
 ## Writing New Tests
 
-### When adding new tests:
+When adding new tests:
 
-1. Place unit tests alongside the feature they cover (e.g. `tests/consang/` or
-	`tests/parsers/gw/`).
-2. Use descriptive test names that clearly indicate the purpose of the test.
-3. Include a docstring in each test to explain what it validates.
-4. Follow pytest conventions for fixtures and assertions.
+1. **File location:** Place them alongside the feature they cover. Example:
 
-### Debugging Test Failures
+   * Domain logic → `tests/consang/`
+   * Parser → `tests/parsers/gw/`
 
-If a test fails, pytest will display detailed output, including the assertion that failed and the expected vs. actual values. Use this information to debug the issue.
+2. **Test naming:** Use descriptive names that clearly indicate what the test validates.
+   Example: `test_load_non_dict_pickle_triggers_warning`.
 
-### Contribution Guidelines
+3. **Docstrings:** Include a brief docstring explaining the purpose of each test.
 
-- Ensure all tests pass before submitting changes.
-- Add tests for any new functionality or bug fixes.
-- Maintain clear and concise test descriptions.
+4. **Fixtures & assertions:** Follow pytest conventions. Use `capsys` to capture stdout if needed.
 
-### Additional Notes
+5. **Coverage:** Ensure all branches of the code are tested.
 
-- The functional tests are designed to validate the Python implementation against the original COBOL logic. If discrepancies are found, ensure the Python implementation aligns with the business rules defined in the COBOL program.
-- Mocking is used in some tests to simulate file input/output and other external dependencies.
+---
 
+## Debugging Test Failures
 
-## Regenerating golden fixtures
+* Pytest output shows the assertion failure with expected vs. actual values.
+* Use `print()` or `capsys` in tests for debugging.
+* Check for edge cases such as empty files, corrupted data, or unexpected types (important for storage/database tests).
 
-The cousin-degree feature stores CLI and JSON goldens under
-`tests/fixtures/consang/`. Regenerate them with:
+---
+
+## Contribution Guidelines
+
+* All tests must pass before submitting code.
+* Add tests for new functionality or bug fixes.
+* Keep test names and descriptions clear and concise.
+* Avoid side effects: tests should clean up temporary files or mock external dependencies.
+
+---
+
+## Golden Fixtures (Cousin-Degree)
+
+The cousin-degree feature uses **golden fixtures** stored in `tests/fixtures/consang/`.
+
+To regenerate:
 
 ```bash
 PYTHONPATH=$(pwd)/src python tools/regenerate_cousin_goldens.py
 ```
 
-Add or update JSON scenarios in
-`tests/fixtures/consang/cousin_degrees/simple_cases.json`, then run the
-targeted tests:
+To add or update JSON scenarios:
+
+1. Edit `tests/fixtures/consang/cousin_degrees/*.json`
+2. Run the targeted tests:
 
 ```bash
 PYTHONPATH=$(pwd)/src pytest tests/consang/test_cousin_degree.py
 ```
 
-For any questions or issues, please contact the project maintainers.
+---
 
+## Example: Covering DiskStorage Edge Cases
+
+For instance, to cover `DiskStorage.load()` when the pickle file exists but contains a **non-dict**, you could write:
+
+```python
+import tempfile
+import pickle
+from src.db.disk_storage import DiskStorage
+
+def test_load_non_dict_pickle_triggers_warning(capsys):
+    """DiskStorage should reset data when a non-dict pickle is loaded"""
+    with tempfile.NamedTemporaryFile("wb", delete=False) as tmp:
+        pickle.dump([1, 2, 3], tmp)
+        tmp.flush()
+        filepath = tmp.name
+
+    storage = DiskStorage(filepath)
+    storage.load()
+    captured = capsys.readouterr()
+    assert "contained invalid data" in captured.out
+    assert storage.data == {}
+```
+
+This ensures **all branches in `disk_storage.py` are tested**, including the warning print.
+
+---
+
+## Notes
+
+* Functional tests verify the Python rewrite against original COBOL logic.
+* Mocking is used to simulate I/O or external dependencies where necessary.
+* Always validate that regenerated fixtures produce consistent results.
+
+---
+
+This document is now **fully adapted** to your current project context, directory structure, and `PYTHONPATH`-based test execution.
