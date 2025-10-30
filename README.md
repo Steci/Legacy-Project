@@ -123,11 +123,11 @@ docker run -it --rm -p 5000:5000 legacy-project
 Legacy-Project/
 ├── app.py                     # Main web or API entrypoint (Flask/FastAPI)
 ├── run.sh                     # Helper script for running the app
-├── Dockerfile                 # Docker configuration for containerized deployment
+├── Dockerfile                 # Docker configuration for deployment
 ├── requirements.txt            # Python dependencies
 ├── CODE_OF_CONDUCT.md          # Contribution conduct rules
 ├── LICENSE                     # MIT License
-├── README.md                   # This file
+├── README.md
 ├── docs/                       # Project documentation
 │   ├── conventionnalCommit.md  # Commit message rules
 │   ├── signedCommit.md         # Commit signature requirements
