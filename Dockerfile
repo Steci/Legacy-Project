@@ -1,11 +1,18 @@
-FROM python:3.10-slim
+FROM python:3.12-slim
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    git \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-COPY . /app
+COPY requirements.txt .
 
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --upgrade pip && pip install -r requirements.txt
 
-ENV PYTHONPATH=/app/src
+COPY . .
 
-CMD ["python3", "-m", "src"]
+EXPOSE 5000
+
+CMD ["python3", "app.py"]
