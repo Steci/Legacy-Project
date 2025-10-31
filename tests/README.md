@@ -1,10 +1,20 @@
+# Test Policy and Guidelines
+
+This document serves as the official **Test Policy** for the Legacy Project Python rewrite. It defines the structure, requirements, and best practices for all automated testing in this repository. All contributors must follow these guidelines to ensure code quality and maintainability.
+
 # Unit Test Technical Document — Legacy Project
 
+
 This document explains how to structure, run, and extend the pytest-based test suite for the Python rewrite of the Legacy Project.
+
+**All core unit tests for the Python rewrite have now been implemented.**
+
+The test suite provides comprehensive coverage for all major modules, including consanguinity, parsers, database/storage, search engine, sosa, and statistics. All critical logic, data models, and API endpoints are now exercised by automated tests. Ongoing maintenance should focus on keeping tests up to date as features evolve and adding new tests for any new modules or bug fixes.
 
 Tests are organized into sub-packages under `tests/` (e.g., `tests/consang/`, `tests/parsers/`) to mirror the source tree in `src/` and keep fixtures close to the code they exercise.
 
 ---
+
 
 ## Test Structure
 
@@ -18,10 +28,14 @@ Tests are organized into sub-packages under `tests/` (e.g., `tests/consang/`, `t
   Validate the Pythonized storage layer (`DiskStorage`, database operations, serialization/deserialization).
 
 * **Search engine tests** (`tests/search_engine/`):
-  Cover search functionality, API behavior, and statistics.
+  Cover search functionality, API behavior, statistics, and all search-related modules (including relationship and analytics engines).
 
 * **Sosa tests** (`tests/sosa/`):
   Test caching, branch calculation, CLI integration, and formatter output.
+
+* **Statistics tests**: Included in `tests/search_engine/` and cover all analytics and reporting features.
+
+* **Test coverage**: All major modules and data models are now covered by unit tests. Add new tests in the appropriate subdirectory when extending or refactoring the codebase.
 
 ---
 
@@ -40,6 +54,7 @@ pip install pytest pytest-mock
 ```
 
 ---
+
 
 ## Running the Tests
 
@@ -74,21 +89,14 @@ PYTHONPATH=$(pwd)/src pytest -k test_parse_family_normal_case -v
 
 ## Writing New Tests
 
+
 When adding new tests:
 
-1. **File location:** Place them alongside the feature they cover. Example:
-
-   * Domain logic → `tests/consang/`
-   * Parser → `tests/parsers/gw/`
-
-2. **Test naming:** Use descriptive names that clearly indicate what the test validates.
-   Example: `test_load_non_dict_pickle_triggers_warning`.
-
+1. **File location:** Place them in the subdirectory matching the feature/module they cover (see structure above).
+2. **Test naming:** Use descriptive names that clearly indicate what the test validates (e.g., `test_search_engine_fuzzy_name_match`).
 3. **Docstrings:** Include a brief docstring explaining the purpose of each test.
-
 4. **Fixtures & assertions:** Follow pytest conventions. Use `capsys` to capture stdout if needed.
-
-5. **Coverage:** Ensure all branches of the code are tested.
+5. **Coverage:** Ensure all branches and edge cases are tested. New features or bug fixes should always include corresponding tests.
 
 ---
 
@@ -100,12 +108,14 @@ When adding new tests:
 
 ---
 
+
 ## Contribution Guidelines
 
-* All tests must pass before submitting code.
-* Add tests for new functionality or bug fixes.
+* All tests must pass before submitting code or merging pull requests.
+* Add or update tests for any new functionality, bug fixes, or refactors.
 * Keep test names and descriptions clear and concise.
 * Avoid side effects: tests should clean up temporary files or mock external dependencies.
+* If you add a new module or feature, create a corresponding test file in the appropriate subdirectory.
 
 ---
 
@@ -164,5 +174,3 @@ This ensures **all branches in `disk_storage.py` are tested**, including the war
 * Always validate that regenerated fixtures produce consistent results.
 
 ---
-
-This document is now **fully adapted** to your current project context, directory structure, and `PYTHONPATH`-based test execution.
