@@ -19,19 +19,45 @@
 
     <!-- Search Form -->
     <form method="GET" action="{{ url_for('search') }}" style="margin-bottom: 35px;">
-        <div style="display: flex; gap: 12px; background-color: white; padding: 8px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-            <input type="text"
-                   name="q"
-                   value="{{ query }}"
-                   placeholder="Search for persons, families, places..."
-                   style="flex: 1; padding: 16px 20px; font-size: 1.1em; border: 2px solid #e0e0e0; border-radius: 8px; outline: none; transition: border-color 0.2s;"
-                   autofocus
-                   onfocus="this.style.borderColor='#667eea'"
-                   onblur="this.style.borderColor='#e0e0e0'">
-            <button type="submit"
-                    style="padding: 16px 35px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; font-size: 1.1em; font-weight: 600; cursor: pointer; transition: opacity 0.2s;">
-                Search
-            </button>
+        <div style="background-color: white; padding: 8px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+            <!-- Language Selection -->
+            <div style="display: flex; align-items: center; gap: 10px; padding: 12px 8px; border-bottom: 1px solid #e8e8e8; margin-bottom: 8px;">
+                <label for="language" style="color: #667eea; font-weight: 600; font-size: 0.95em; white-space: nowrap; display: flex; align-items: center; gap: 6px;">
+                    🌍 Language:
+                </label>
+                <select name="lang"
+                        id="language"
+                        style="padding: 8px 12px; font-size: 0.95em; border: 2px solid #e0e0e0; border-radius: 6px; outline: none; cursor: pointer; transition: border-color 0.2s; background-color: white; color: #2c3e50; flex: 1; max-width: 200px;"
+                        onfocus="this.style.borderColor='#667eea'"
+                        onblur="this.style.borderColor='#e0e0e0'">
+                    <option value="all" {% if language == 'all' or not language %}selected{% endif %}>All Languages</option>
+                    <option value="en" {% if language == 'en' %}selected{% endif %}>English</option>
+                    <option value="fr" {% if language == 'fr' %}selected{% endif %}>Français (French)</option>
+                    <option value="de" {% if language == 'de' %}selected{% endif %}>Deutsch (German)</option>
+                    <option value="it" {% if language == 'it' %}selected{% endif %}>Italiano (Italian)</option>
+                    <option value="es" {% if language == 'es' %}selected{% endif %}>Español (Spanish)</option>
+                    <option value="pt" {% if language == 'pt' %}selected{% endif %}>Português (Portuguese)</option>
+                </select>
+                <div style="color: #95a5a6; font-size: 0.85em; margin-left: auto;">
+                    💡 Filter results by language
+                </div>
+            </div>
+
+            <!-- Search Input -->
+            <div style="display: flex; gap: 12px;">
+                <input type="text"
+                       name="q"
+                       value="{{ query }}"
+                       placeholder="Search for persons, families, places..."
+                       style="flex: 1; padding: 16px 20px; font-size: 1.1em; border: 2px solid #e0e0e0; border-radius: 8px; outline: none; transition: border-color 0.2s;"
+                       autofocus
+                       onfocus="this.style.borderColor='#667eea'"
+                       onblur="this.style.borderColor='#e0e0e0'">
+                <button type="submit"
+                        style="padding: 16px 35px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; font-size: 1.1em; font-weight: 600; cursor: pointer; transition: opacity 0.2s;">
+                    Search
+                </button>
+            </div>
         </div>
     </form>
 
@@ -43,6 +69,11 @@
         </h2>
         <p style="color: #7f8c8d; font-size: 1.05em; margin: 0;">
             Found <strong style="color: #667eea;">{{ results|length }}</strong> person(s) and <strong style="color: #f093fb;">{{ family_results|length }}</strong> family/families
+            {% if language and language != 'all' %}
+            <span style="margin-left: 8px; padding: 4px 10px; background-color: #f0f8ff; color: #667eea; border-radius: 4px; font-size: 0.9em;">
+                🌍 Filtered by: {% if language == 'en' %}English{% elif language == 'fr' %}French{% elif language == 'de' %}German{% elif language == 'it' %}Italian{% elif language == 'es' %}Spanish{% elif language == 'pt' %}Portuguese{% endif %}
+            </span>
+            {% endif %}
         </p>
     </div>
 
@@ -65,15 +96,6 @@
                         </h4>
 
                         <div style="display: flex; flex-wrap: wrap; gap: 15px; margin-top: 10px;">
-                            {% if person.sex %}
-                            <span style="color: #7f8c8d;">
-                                <strong>Sex:</strong>
-                                {% if person.sex.name == 'MALE' %}♂ Male
-                                {% elif person.sex.name == 'FEMALE' %}♀ Female
-                                {% else %}Unknown{% endif %}
-                            </span>
-                            {% endif %}
-
                             {% if person.occupation %}
                             <span style="color: #7f8c8d;">
                                 <strong>Occupation:</strong> {{ person.occupation }}
@@ -232,6 +254,40 @@
 
     a[style*="color: #667eea"]:hover {
         text-decoration: underline !important;
+    }
+
+    /* Language selector styling */
+    select#language {
+        appearance: none;
+        background-image: url('data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12"><path fill="%23667eea" d="M6 9L1 4h10z"/></svg>');
+        background-repeat: no-repeat;
+        background-position: right 10px center;
+        padding-right: 35px !important;
+    }
+
+    select#language:hover {
+        border-color: #667eea !important;
+        box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+    }
+
+    select#language:focus {
+        box-shadow: 0 2px 12px rgba(102, 126, 234, 0.3);
+    }
+
+    /* Responsive design for language selector */
+    @media (max-width: 768px) {
+        div[style*="padding: 12px 8px"] {
+            flex-wrap: wrap;
+        }
+
+        select#language {
+            max-width: 100% !important;
+            width: 100%;
+        }
+
+        div[style*="💡 Filter results by language"] {
+            display: none;
+        }
     }
 </style>
 {% endblock %}
