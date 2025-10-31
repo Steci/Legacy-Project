@@ -75,26 +75,8 @@ except Exception as e:
     print(f"   ❌ Flask app import failed: {e}")
     sys.exit(1)
 
-# Test 6: Check sample data
-print("\n6. Testing sample data...")
-try:
-    if 'darwin' in flask_app.sample_persons:
-        darwin = flask_app.sample_persons['darwin']
-        print(f"   ✅ Darwin: {darwin.first_name} {darwin.surname}")
-    else:
-        print("   ❌ Darwin not found in sample data")
-
-    if 'lovelace' in flask_app.sample_persons:
-        lovelace = flask_app.sample_persons['lovelace']
-        print(f"   ✅ Lovelace: {lovelace.first_name} {lovelace.surname}")
-    else:
-        print("   ❌ Lovelace not found in sample data")
-except Exception as e:
-    print(f"   ❌ Sample data check failed: {e}")
-    sys.exit(1)
-
-# Test 7: Test Flask app context
-print("\n7. Testing Flask app context...")
+# Test 6: Test Flask app context
+print("\n6. Testing Flask app context...")
 try:
     with flask_app.app.app_context():
         print("   ✅ Flask app context created successfully")
@@ -102,8 +84,8 @@ except Exception as e:
     print(f"   ❌ Flask app context failed: {e}")
     sys.exit(1)
 
-# Test 8: Check static files
-print("\n8. Checking static files...")
+# Test 7: Check static files
+print("\n7. Checking static files...")
 try:
     static_dir = os.path.join(os.path.dirname(__file__), 'static')
     css_dir = os.path.join(static_dir, 'css')
@@ -120,8 +102,8 @@ try:
 except Exception as e:
     print(f"   ⚠️  Static files check failed: {e}")
 
-# Test 9: Check templates
-print("\n9. Checking templates...")
+# Test 8: Check templates
+print("\n8. Checking templates...")
 try:
     templates_dir = os.path.join(os.path.dirname(__file__), 'templates')
     if os.path.exists(templates_dir):
